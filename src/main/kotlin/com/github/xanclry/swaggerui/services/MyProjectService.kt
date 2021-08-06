@@ -1,7 +1,7 @@
-package org.jetbrains.plugins.template.services
+package com.github.xanclry.swaggerui.services
 
+import com.github.xanclry.swaggerui.MyBundle
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.template.MyBundle
 
 class MyProjectService(project: Project) {
 

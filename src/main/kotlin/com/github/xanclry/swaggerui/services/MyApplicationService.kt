@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.xanclry.swaggerui.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.xanclry.swaggerui.MyBundle
 
 class MyApplicationService {
 
