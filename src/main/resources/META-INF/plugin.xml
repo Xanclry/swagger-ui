@@ -1,19 +1,34 @@
 <idea-plugin>
     <id>com.github.xanclry.swaggerui</id>
-    <name>swagger-ui</name>
+    <name>Swagger-Ui</name>
     <vendor>xanclry</vendor>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
+
     <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable parentId="tools" instance="com.github.xanclry.swaggerui.state.SettingsConfigurable"
+                                 id="com.github.xanclry.swaggerui.state.SettingsConfigurable"
+                                 displayName="Swagger Codegen UI Config" />
+
         <applicationService serviceImplementation="com.github.xanclry.swaggerui.services.MyApplicationService"/>
+        <applicationService serviceImplementation="com.github.xanclry.swaggerui.state.SettingsState"/>
         <projectService serviceImplementation="com.github.xanclry.swaggerui.services.MyProjectService"/>
+        <toolWindow factoryClass="com.github.xanclry.swaggerui.toolWindow.CodegenToolWindowFactory" id="Swagger Codegen" />
     </extensions>
 
     <applicationListeners>
         <listener class="com.github.xanclry.swaggerui.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+    <actions>
+
+        <action id="com.github.xanclry.swaggerui.actions.SampleAction"
+                class="com.github.xanclry.swaggerui.actions.SampleAction" text="SampleAction">
+            <add-to-group group-id="BuildMenu" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt M"/>
+        </action>
+    </actions>
 </idea-plugin>
