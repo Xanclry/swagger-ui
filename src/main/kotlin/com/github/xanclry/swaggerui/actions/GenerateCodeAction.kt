@@ -1,25 +1,43 @@
 package com.github.xanclry.swaggerui.actions
 
+import com.github.xanclry.swaggerui.codegen.CodegenFactory
+import com.github.xanclry.swaggerui.codegen.Language
+import com.github.xanclry.swaggerui.util.Notifier
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.psi.PsiFile
 
 class GenerateCodeAction : AnAction() {
+
     override fun actionPerformed(e: AnActionEvent) {
+
+        val psiFile = e.getData(CommonDataKeys.PSI_FILE)
+        val project = e.project
         val editor = e.getData(CommonDataKeys.EDITOR)
-        val document = editor?.document
-        val psiData: PsiFile? = e.getData(CommonDataKeys.PSI_FILE)
-        println()
+        if (psiFile != null && editor != null) {
+            val lang = Language.valueOf(psiFile.language.id)
+            // TODO fix
+            val codegen = CodegenFactory.factoryMethod(lang).createCodegen()
+            val codegenCheckResult = codegen.isFileSuitable(editor.document)
+            val available = codegenCheckResult.isAvailable
+            if (available) {
+                codegen.generateCode()
+            } else {
+                codegenCheckResult.reason?.let {
+                    Notifier.notifyProjectWithMessageFromBundle(project,
+                        it, NotificationType.ERROR)
+                }
+            }
+        } else {
+            Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)
+        }
+
     }
 
     override fun update(e: AnActionEvent) {
-        val project = e.project
         val editor = e.getData(CommonDataKeys.EDITOR)
-        e.presentation.isEnabled = project != null && editor != null
+        e.presentation.isEnabled = editor != null
     }
 
 
