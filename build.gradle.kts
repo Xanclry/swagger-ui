@@ -27,6 +27,19 @@ repositories {
     mavenCentral()
 }
 dependencies {
+// https://mvnrepository.com/artifact/io.swagger/swagger-models
+    implementation("io.swagger:swagger-models:1.6.2") {
+        exclude(group = "org.slf4j", module = "slf4j-api")
+    }
+
+    // https://mvnrepository.com/artifact/io.swagger.parser.v3/swagger-parser
+    implementation("io.swagger.parser.v3:swagger-parser:2.0.27") {
+        exclude(group = "org.slf4j", module = "slf4j-api")
+    }
+
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    //    implementation("org.slf4j:slf4j-api:1.7.32")
+
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
 }
 

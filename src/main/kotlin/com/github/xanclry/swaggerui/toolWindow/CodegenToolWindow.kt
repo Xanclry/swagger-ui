@@ -1,8 +1,7 @@
 package com.github.xanclry.swaggerui.toolWindow
 
 import com.github.xanclry.swaggerui.model.SwaggerMethod
-import com.github.xanclry.swaggerui.state.SettingsState
-import com.intellij.openapi.wm.ToolWindowManager
+import com.github.xanclry.swaggerui.state.settings.SettingsState
 import com.intellij.ui.components.JBList
 import javax.swing.JButton
 import javax.swing.JList
@@ -28,7 +27,6 @@ class CodegenToolWindow {
     }
 
     private fun loadConfig() {
-        val url = SettingsState.instance.configUrl
         println()
     }
 

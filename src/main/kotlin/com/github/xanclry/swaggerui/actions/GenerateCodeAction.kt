@@ -15,14 +15,14 @@ class GenerateCodeAction : AnAction() {
         val psiFile = e.getData(CommonDataKeys.PSI_FILE)
         val project = e.project
         val editor = e.getData(CommonDataKeys.EDITOR)
-        if (psiFile != null && editor != null) {
+        if (project != null && psiFile != null && editor != null) {
             val lang = Language.valueOf(psiFile.language.id)
             // TODO fix
             val codegen = CodegenFactory.factoryMethod(lang).createCodegen()
             val codegenCheckResult = codegen.isFileSuitable(editor.document)
             val available = codegenCheckResult.isAvailable
             if (available) {
-                codegen.generateCode()
+                codegen.generateCode(project)
             } else {
                 codegenCheckResult.reason?.let {
                     Notifier.notifyProjectWithMessageFromBundle(project,

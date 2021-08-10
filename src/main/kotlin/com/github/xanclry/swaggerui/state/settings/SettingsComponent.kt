@@ -1,4 +1,4 @@
-package com.github.xanclry.swaggerui.state
+package com.github.xanclry.swaggerui.state.settings
 
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField

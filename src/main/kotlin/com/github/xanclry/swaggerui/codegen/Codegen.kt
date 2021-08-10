@@ -1,6 +1,7 @@
 package com.github.xanclry.swaggerui.codegen
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.Project
 import kotlin.reflect.KFunction1
 
 interface Codegen {
@@ -19,5 +20,5 @@ interface Codegen {
     }
 
     fun isFileSuitable(document: Document): CodegenAvailability
-    fun generateCode(): String
+    fun generateCode(project: Project)
 }

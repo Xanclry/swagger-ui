@@ -1,6 +1,6 @@
 package com.github.xanclry.swaggerui.actions
 
-import com.github.xanclry.swaggerui.state.SettingsState
+import com.github.xanclry.swaggerui.state.settings.SettingsState
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 

@@ -1,4 +1,4 @@
-package com.github.xanclry.swaggerui.state
+package com.github.xanclry.swaggerui.state.settings
 
 import com.intellij.openapi.options.Configurable
 import org.jetbrains.annotations.Nls
@@ -9,8 +9,8 @@ class SettingsConfigurable : Configurable {
 
     // A default constructor with no arguments is required because this implementation
     // is registered as an applicationConfigurable EP
-    override fun getDisplayName(): @Nls(capitalization = Nls.Capitalization.Title) String {
-        return "SDK: Application Settings Example"
+    override fun getDisplayName(): String {
+        return "Swagger Codegen Settings"
     }
 
     override fun getPreferredFocusedComponent(): JComponent {
