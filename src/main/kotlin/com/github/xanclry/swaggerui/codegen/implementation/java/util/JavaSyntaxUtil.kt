@@ -1,0 +1,180 @@
+package com.github.xanclry.swaggerui.codegen.implementation.java.util
+
+import com.github.xanclry.swaggerui.model.OperationWithMethodDto
+import com.github.xanclry.swaggerui.model.SwaggerMethodDto
+import io.swagger.models.HttpMethod
+import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.responses.ApiResponse
+
+class JavaSyntaxUtil {
+    fun getControllerPath(text: String): String {
+        val regex = "@RequestMapping.*?\"(.+?)\"".toRegex()
+        val find = regex.find(text)?.groupValues?.get(1)
+        return find ?: ""
+    }
+
+    fun getEndpointsMappings(text: String): List<SwaggerMethodDto> {
+        val regex = "@([^R]{3,7})Mapping.*?\"(.+?)\"".toRegex()
+        val searchResult = regex.findAll(text)
+
+        val resultList: MutableList<SwaggerMethodDto> = ArrayList()
+
+        searchResult.forEach { matchResult ->
+            val method = HttpMethod.valueOf(matchResult.groupValues[1].toUpperCase())
+            val path = matchResult.groupValues[2]
+            val existingDto: SwaggerMethodDto? = resultList.find { dto ->
+                dto.path == path
+            }
+            if (existingDto != null) {
+                existingDto.method.add(method)
+            } else {
+                val newDto = SwaggerMethodDto(HashSet(), path)
+                newDto.method.add(method)
+                resultList.add(newDto)
+            }
+        }
+
+        return resultList
+    }
+
+    fun generateEndpointCode(operationWithMethodDto: OperationWithMethodDto, controllerPath: String): String {
+        val pathForEndpoint = operationWithMethodDto.path.removePrefix(controllerPath)
+        val bindAnnotationCode = generateBindAnnotationCode(operationWithMethodDto.method, pathForEndpoint)
+        val apiOperationCode = generateApiOperationCode(operationWithMethodDto.operation)
+        val apiResponsesCode = generateApiResponsesCode(operationWithMethodDto.operation)
+        val methodCode = generateMethodCode(operationWithMethodDto)
+        return "    $bindAnnotationCode\n    $apiOperationCode\n    $apiResponsesCode\n$methodCode"
+    }
+
+    private fun generateMethodCode(operationWithMethodDto: OperationWithMethodDto): String {
+        val returnType = generateMethodReturnType(operationWithMethodDto.operation)
+        val parametersString = generateMethodParameters(operationWithMethodDto.operation)
+        val methodName = generateMethodName(operationWithMethodDto)
+        return """
+            |    public $returnType $methodName($parametersString) {
+            |        // todo implement this method
+            |        return null;
+            |    }
+        """.trimMargin()
+    }
+
+    private fun generateMethodParameters(operation: Operation): String {
+        var accumulator = ""
+        operation.parameters.forEach { parameter ->
+            accumulator += "\n            ".plus(generateSingleMethodParameter(parameter)).plus(",")
+        }
+
+        val lastComma = accumulator.lastIndexOf(",")
+        if (lastComma > 0) {
+            accumulator = accumulator.replaceRange(lastComma, lastComma + 1, "")
+        }
+        return accumulator
+    }
+
+    private fun generateParameterHttpType(parameter: Parameter): String {
+        return when (parameter.`in`) {
+            "path" -> """@PathVariable(name = "${parameter.name}")"""
+
+            "query", "formData" -> {
+                val default = if (parameter.schema.default != null) """, defaultValue = "${parameter.schema.default}"""" else ""
+                """@RequestParam(required = ${parameter.required ?: "false"}, name = "${parameter.name}"$default)"""
+            }
+            "body" -> "@RequestBody"
+            else -> ""
+        }
+    }
+
+    private fun generateSingleMethodParameter(parameter: Parameter): String {
+
+        return """@ApiParam(value = "${parameter.description}") ${generateParameterHttpType(parameter)} ${getParameterType(parameter.schema.type, parameter.schema.format, parameter)} ${getParameterName(parameter)}"""
+    }
+
+    private fun getParameterName(parameter: Parameter): String {
+        return parameter.name
+    }
+
+    private fun getParameterType(type: String, format: String?, parameter: Parameter): String {
+        when (type) {
+            "integer" -> {
+                if (format == "int64") {
+                    return "Long"
+                }
+                return "Integer"
+            }
+            "number" -> {
+                if (format == "float") {
+                    return "Float"
+                }
+                return "Double"
+            }
+            "boolean" -> return "Boolean"
+            "string" -> {
+                if (parameter.schema.enum != null) return "*Unknown Enum*"
+                return when (format) {
+                    "date" -> "LocalDate"
+                    else -> "String"
+                }
+            }
+            "array" -> {
+                return "List<>"
+            }
+
+        }
+        return "***"
+    }
+
+    private fun generateMethodReturnType(operation: Operation): String {
+        val ref: String? = operation.responses["200"]?.content?.get("*/*")?.schema?.`$ref`
+        return if (ref != null) {
+            val returnTypeWithQuotes = ref.replaceBeforeLast("/", "").replaceRange(0, 1, "")
+            returnTypeWithQuotes.replace("»", ">").replace("«", "<")
+        } else {
+            "void"
+        }
+    }
+
+    private fun generateMethodName(operationWithMethodDto: OperationWithMethodDto): String {
+        val operationId = operationWithMethodDto.operation.operationId
+        val usingIndex = operationId.lastIndexOf("Using${operationWithMethodDto.method.toString().toUpperCase()}")
+
+        return operationId.replaceRange(usingIndex, operationId.length, "")
+    }
+
+    private fun generateApiResponsesCode(operation: Operation): String {
+        return if (operation.responses.isNotEmpty()) {
+            var responseAccumulator = ""
+            operation.responses.forEach { response ->
+                responseAccumulator = responseAccumulator.plus(generateSingleApiResponseCode(response.key, response.value)).plus(",\n")
+            }
+            """@ApiResponses(value = { 
+                      |$responseAccumulator    })""".trimMargin()
+        } else {
+            ""
+        }
+    }
+
+    private fun generateSingleApiResponseCode(code: String, apiResponse: ApiResponse): String {
+        val message: String = if (apiResponse.description != null) """, message = "${apiResponse.description}"""" else ""
+        return """            @ApiResponse(code = ${code}${message})"""
+    }
+
+    private fun generateApiOperationCode(operation: Operation): String {
+        val description = operation.summary
+        return if (description != null) {
+            """@ApiOperation(value = "$description")"""
+        } else {
+            ""
+        }
+    }
+
+    private fun generateBindAnnotationCode(method: HttpMethod, path: String): String {
+        val methodNameInLowerCase = method.toString().toLowerCase()
+        val methodName = methodNameInLowerCase.replaceRange(0, 1, methodNameInLowerCase[0].toString().toUpperCase())
+        return if (path == "") {
+            """@${methodName}Mapping"""
+        } else {
+            """@${methodName}Mapping("$path")"""
+        }
+    }
+}

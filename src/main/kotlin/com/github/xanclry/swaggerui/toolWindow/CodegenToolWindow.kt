@@ -1,7 +1,6 @@
 package com.github.xanclry.swaggerui.toolWindow
 
-import com.github.xanclry.swaggerui.model.SwaggerMethod
-import com.github.xanclry.swaggerui.state.settings.SettingsState
+import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.intellij.ui.components.JBList
 import javax.swing.JButton
 import javax.swing.JList
@@ -11,7 +10,7 @@ class CodegenToolWindow {
     private var panel1: JPanel? = null
     private var loadConfigButton: JButton? = null
     private var updateTreeButton: JButton? = null
-    private var methodList: JList<SwaggerMethod> = JBList()
+    private var methodList: JList<SwaggerMethodDto> = JBList()
 
     init {
         loadConfigButton?.addActionListener {

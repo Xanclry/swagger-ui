@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.command.WriteCommandAction
 
 class GenerateCodeAction : AnAction() {
 
@@ -22,7 +23,12 @@ class GenerateCodeAction : AnAction() {
             val codegenCheckResult = codegen.isFileSuitable(editor.document)
             val available = codegenCheckResult.isAvailable
             if (available) {
-                codegen.generateCode(project)
+                val generatedCode = codegen.generateCode(project, editor)
+                val offsetForNewCode = codegen.offsetForNewCode(editor.document)
+                WriteCommandAction.runWriteCommandAction(project) {
+                    editor.document.insertString(offsetForNewCode, generatedCode)
+                }
+                editor.caretModel.moveToOffset(offsetForNewCode)
             } else {
                 codegenCheckResult.reason?.let {
                     Notifier.notifyProjectWithMessageFromBundle(project,
