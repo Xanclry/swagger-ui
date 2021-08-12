@@ -3,8 +3,8 @@ package com.github.xanclry.swaggerui.state.settings
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
-import javax.swing.JPanel
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 class SettingsComponent {
     val panel: JPanel

@@ -2,6 +2,7 @@ package com.github.xanclry.swaggerui.codegen
 
 import com.github.xanclry.swaggerui.codegen.exception.LanguageNotSupportedException
 import com.github.xanclry.swaggerui.codegen.factory.JavaCodegenFactory
+import com.intellij.openapi.project.Project
 
 abstract class CodegenFactory {
     companion object {
@@ -15,5 +16,5 @@ abstract class CodegenFactory {
         }
     }
 
-    abstract fun createCodegen(): Codegen
+    abstract fun createCodegen(project: Project): Codegen
 }

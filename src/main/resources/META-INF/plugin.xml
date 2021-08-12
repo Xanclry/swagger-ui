@@ -9,40 +9,23 @@
 
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationConfigurable parentId="tools" instance="com.github.xanclry.swaggerui.state.settings.SettingsConfigurable"
+        <applicationConfigurable parentId="tools"
+                                 instance="com.github.xanclry.swaggerui.state.settings.SettingsConfigurable"
                                  id="com.github.xanclry.swaggerui.state.settings.SettingsConfigurable"
                                  displayName="Swagger Codegen UI Config"/>
 
-        <applicationService serviceImplementation="com.github.xanclry.swaggerui.services.MyApplicationService"/>
         <applicationService serviceImplementation="com.github.xanclry.swaggerui.state.settings.SettingsState"/>
         <projectService serviceImplementation="com.github.xanclry.swaggerui.services.ConfigurationService"/>
-        <toolWindow factoryClass="com.github.xanclry.swaggerui.toolWindow.CodegenToolWindowFactory"
-                    id="Swagger Codegen"/>
-        <notificationGroup displayType="BALLOON" id="Swagger Load Config Notification" />
     </extensions>
-
-    <applicationListeners>
-        <listener class="com.github.xanclry.swaggerui.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
 
     <actions>
         <group id="com.github.xanclry.swaggerui.groups.SwaggerCodegenGroup" popup="true" text="Swagger Codegen">
 
-            <add-to-group group-id="ToolsMenu" anchor="last" />
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
 
-            <action id="com.github.xanclry.swaggerui.actions.LoadConfigAction"
-                    class="com.github.xanclry.swaggerui.actions.LoadConfigAction"
-                    text="Load Config V2">
-<!--                <add-to-group group-id="com.github.xanclry.swaggerui.groups.SwaggerCodegenGroup" anchor="first"/>-->
-            </action>
-            <action id="com.github.xanclry.swaggerui.actions.UpdateTreeAction"
-                    class="com.github.xanclry.swaggerui.actions.UpdateTreeAction" text="Update Tree V2">
-<!--                <add-to-group group-id="com.github.xanclry.swaggerui.groups.SwaggerCodegenGroup" anchor="last"/>-->
-            </action>
             <action class="com.github.xanclry.swaggerui.actions.GenerateCodeAction"
                     id="com.github.xanclry.swaggerui.actions.GenerateCodeAction"
-                    text="Generate Endpoints" icon="AllIcons.Actions.PrettyPrint" />
+                    text="Generate Endpoints In Current Controller" icon="AllIcons.Actions.PrettyPrint"/>
         </group>
 
 

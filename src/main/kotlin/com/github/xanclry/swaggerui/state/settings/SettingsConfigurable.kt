@@ -1,7 +1,6 @@
 package com.github.xanclry.swaggerui.state.settings
 
 import com.intellij.openapi.options.Configurable
-import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 class SettingsConfigurable : Configurable {

@@ -1,38 +1,37 @@
 package com.github.xanclry.swaggerui.services
 
-import com.github.xanclry.swaggerui.MyBundle
 import com.github.xanclry.swaggerui.state.settings.SettingsPathType
 import com.github.xanclry.swaggerui.state.settings.SettingsState
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.Project
 import io.swagger.parser.OpenAPIParser
 import io.swagger.v3.oas.models.OpenAPI
 
 @Service
-class ConfigurationService(project: Project) {
-
-    init {
-        println(MyBundle.message("projectService", project.name))
-    }
+class ConfigurationService {
 
     fun getConfiguration(): OpenAPI {
+        return loadConfig()
+    }
+
+    private fun loadConfig(): OpenAPI {
         val url = SettingsState.instance.configUrl
         return when (SettingsState.instance.configType) {
-            SettingsPathType.URL -> getUrlConfiguration(url)
-            SettingsPathType.FILE -> getFileConfiguration(url)
+            SettingsPathType.URL -> loadUrlConfiguration(url)
+            SettingsPathType.FILE -> loadFileConfiguration()
         }
     }
 
-    private fun getUrlConfiguration(url: String): OpenAPI {
-        // todo add wrong url exception handling
-        return OpenAPIParser().readLocation(url, null, null).openAPI
-
+    private fun loadUrlConfiguration(url: String): OpenAPI {
+        val parsedConfig = OpenAPIParser().readLocation(url, null, null)
+        if (parsedConfig.openAPI != null) {
+            return parsedConfig.openAPI
+        } else {
+            throw IllegalArgumentException()
+        }
     }
 
-    private fun getFileConfiguration(url: String): OpenAPI {
+    private fun loadFileConfiguration(): OpenAPI {
         TODO("Not yet implemented")
-
     }
-
 
 }

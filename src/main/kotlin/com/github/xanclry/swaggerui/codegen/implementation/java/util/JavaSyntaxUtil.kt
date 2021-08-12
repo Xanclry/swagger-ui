@@ -27,10 +27,10 @@ class JavaSyntaxUtil {
                 dto.path == path
             }
             if (existingDto != null) {
-                existingDto.method.add(method)
+                existingDto.methodSet.add(method)
             } else {
                 val newDto = SwaggerMethodDto(HashSet(), path)
-                newDto.method.add(method)
+                newDto.methodSet.add(method)
                 resultList.add(newDto)
             }
         }
@@ -61,13 +61,15 @@ class JavaSyntaxUtil {
 
     private fun generateMethodParameters(operation: Operation): String {
         var accumulator = ""
-        operation.parameters.forEach { parameter ->
-            accumulator += "\n            ".plus(generateSingleMethodParameter(parameter)).plus(",")
-        }
+        if (operation.parameters != null) {
+            operation.parameters.forEach { parameter ->
+                accumulator += "\n            ".plus(generateSingleMethodParameter(parameter)).plus(",")
+            }
 
-        val lastComma = accumulator.lastIndexOf(",")
-        if (lastComma > 0) {
-            accumulator = accumulator.replaceRange(lastComma, lastComma + 1, "")
+            val lastComma = accumulator.lastIndexOf(",")
+            if (lastComma > 0) {
+                accumulator = accumulator.replaceRange(lastComma, lastComma + 1, "")
+            }
         }
         return accumulator
     }
@@ -77,7 +79,8 @@ class JavaSyntaxUtil {
             "path" -> """@PathVariable(name = "${parameter.name}")"""
 
             "query", "formData" -> {
-                val default = if (parameter.schema.default != null) """, defaultValue = "${parameter.schema.default}"""" else ""
+                val default =
+                    if (parameter.schema.default != null) """, defaultValue = "${parameter.schema.default}"""" else ""
                 """@RequestParam(required = ${parameter.required ?: "false"}, name = "${parameter.name}"$default)"""
             }
             "body" -> "@RequestBody"
@@ -87,7 +90,13 @@ class JavaSyntaxUtil {
 
     private fun generateSingleMethodParameter(parameter: Parameter): String {
 
-        return """@ApiParam(value = "${parameter.description}") ${generateParameterHttpType(parameter)} ${getParameterType(parameter.schema.type, parameter.schema.format, parameter)} ${getParameterName(parameter)}"""
+        return """@ApiParam(value = "${parameter.description}") ${generateParameterHttpType(parameter)} ${
+            getParameterType(
+                parameter.schema.type,
+                parameter.schema.format,
+                parameter
+            )
+        } ${getParameterName(parameter)}"""
     }
 
     private fun getParameterName(parameter: Parameter): String {
@@ -145,7 +154,8 @@ class JavaSyntaxUtil {
         return if (operation.responses.isNotEmpty()) {
             var responseAccumulator = ""
             operation.responses.forEach { response ->
-                responseAccumulator = responseAccumulator.plus(generateSingleApiResponseCode(response.key, response.value)).plus(",\n")
+                responseAccumulator =
+                    responseAccumulator.plus(generateSingleApiResponseCode(response.key, response.value)).plus(",\n")
             }
             """@ApiResponses(value = { 
                       |$responseAccumulator    })""".trimMargin()
@@ -155,7 +165,8 @@ class JavaSyntaxUtil {
     }
 
     private fun generateSingleApiResponseCode(code: String, apiResponse: ApiResponse): String {
-        val message: String = if (apiResponse.description != null) """, message = "${apiResponse.description}"""" else ""
+        val message: String =
+            if (apiResponse.description != null) """, message = "${apiResponse.description}"""" else ""
         return """            @ApiResponse(code = ${code}${message})"""
     }
 

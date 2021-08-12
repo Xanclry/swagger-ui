@@ -7,7 +7,7 @@ import kotlin.reflect.KFunction1
 
 interface Codegen {
 
-    fun runChecks(code: String, vararg functions: KFunction1<String, String?>) : CodegenAvailability {
+    fun runChecks(code: String, vararg functions: KFunction1<String, String?>): CodegenAvailability {
         val result = CodegenAvailability(true, null)
         for (f in functions.iterator()) {
             val r: String? = f.invoke(code)
