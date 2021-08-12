@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 
-
 class JavaCodegenImpl(project: Project) : Codegen {
 
     private val syntaxUtil = JavaSyntaxUtil()
@@ -36,7 +35,6 @@ class JavaCodegenImpl(project: Project) : Codegen {
                 accumulator += syntaxUtil.generateEndpointCode(endpoint, controllerPath).plus("\n\n")
             }
             return accumulator
-
         } catch (e: IllegalArgumentException) {
             Notifier.notifyProjectWithMessageFromBundle(
                 project,

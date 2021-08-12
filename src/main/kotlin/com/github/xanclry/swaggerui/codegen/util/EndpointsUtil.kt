@@ -66,5 +66,4 @@ class EndpointsUtil(project: Project) {
             OperationWithMethodDto(HttpMethod.PATCH, path, entryFromConfig.value.patch)
         )
     }
-
 }

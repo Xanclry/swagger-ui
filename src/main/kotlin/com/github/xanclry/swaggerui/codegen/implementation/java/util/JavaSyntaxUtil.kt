@@ -91,11 +91,11 @@ class JavaSyntaxUtil {
     private fun generateSingleMethodParameter(parameter: Parameter): String {
 
         return """@ApiParam(value = "${parameter.description}") ${generateParameterHttpType(parameter)} ${
-            getParameterType(
-                parameter.schema.type,
-                parameter.schema.format,
-                parameter
-            )
+        getParameterType(
+            parameter.schema.type,
+            parameter.schema.format,
+            parameter
+        )
         } ${getParameterName(parameter)}"""
     }
 
@@ -128,7 +128,6 @@ class JavaSyntaxUtil {
             "array" -> {
                 return "List<>"
             }
-
         }
         return "***"
     }
@@ -167,7 +166,7 @@ class JavaSyntaxUtil {
     private fun generateSingleApiResponseCode(code: String, apiResponse: ApiResponse): String {
         val message: String =
             if (apiResponse.description != null) """, message = "${apiResponse.description}"""" else ""
-        return """            @ApiResponse(code = ${code}${message})"""
+        return """            @ApiResponse(code = ${code}$message)"""
     }
 
     private fun generateApiOperationCode(operation: Operation): String {

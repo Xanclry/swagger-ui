@@ -53,11 +53,8 @@ class GenerateCodeAction : AnAction() {
         }
     }
 
-
     override fun update(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR)
         e.presentation.isEnabled = editor != null
     }
-
-
 }

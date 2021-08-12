@@ -33,5 +33,4 @@ class ConfigurationService {
     private fun loadFileConfiguration(): OpenAPI {
         TODO("Not yet implemented")
     }
-
 }
