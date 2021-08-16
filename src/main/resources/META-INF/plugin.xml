@@ -1,7 +1,9 @@
 <idea-plugin>
     <id>com.github.xanclry.swaggerui</id>
-    <name>Swagger-Ui</name>
+    <name>Endpoint UI Codegen</name>
     <vendor>xanclry</vendor>
+    <version>0.1</version>
+    <description>Simple Swagger/OpenAPI endpoint generator tool. Settings can be accessed by Settings -> Swagger UI. Plugin menu is in Tools -> Swagger Codegen</description>
 
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -12,14 +14,14 @@
         <applicationConfigurable parentId="tools"
                                  instance="com.github.xanclry.swaggerui.state.settings.SettingsConfigurable"
                                  id="com.github.xanclry.swaggerui.state.settings.SettingsConfigurable"
-                                 displayName="Swagger Codegen UI Config"/>
+                                 displayName="Endpoint UI Codegen Config"/>
 
         <applicationService serviceImplementation="com.github.xanclry.swaggerui.state.settings.SettingsState"/>
         <projectService serviceImplementation="com.github.xanclry.swaggerui.services.ConfigurationService"/>
     </extensions>
 
     <actions>
-        <group id="com.github.xanclry.swaggerui.groups.SwaggerCodegenGroup" popup="true" text="Swagger Codegen">
+        <group id="com.github.xanclry.swaggerui.groups.SwaggerCodegenGroup" popup="true" text="Endpoint UI Codegen">
 
             <add-to-group group-id="ToolsMenu" anchor="last"/>
 

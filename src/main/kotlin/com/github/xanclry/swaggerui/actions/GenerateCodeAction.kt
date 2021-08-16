@@ -26,11 +26,7 @@ class GenerateCodeAction : AnAction() {
         }
     }
 
-    private fun generateCode(
-        psiFile: PsiFile,
-        editor: Editor,
-        project: Project
-    ) {
+    private fun generateCode(psiFile: PsiFile, editor: Editor, project: Project) {
         val lang: Language = Language.valueOf(psiFile.language.id)
         val codegen = CodegenFactory.factoryMethod(lang).createCodegen(project)
 

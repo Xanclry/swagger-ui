@@ -61,7 +61,8 @@ class JavaCodegenImpl(project: Project) : Codegen {
     }
 
     private fun isController(text: String): String? {
-        return if (text.contains("@Controller") || text.contains("@RestController")) null else "notification.codegen.error.java.noController"
+        return if (text.contains("@Controller") || text.contains("@RestController")) null
+        else "notification.codegen.error.java.noController"
     }
 
     private fun hasRequestMapping(text: String): String? {

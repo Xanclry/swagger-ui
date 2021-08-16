@@ -4,6 +4,7 @@
     <ExternalSystemSettings>
       <option name="env">
         <map>
+          <entry key="PUBLISH_TOKEN" value="perm:eGFuZHJ5.OTItNDU0MA==.vLSWvmP1akWJVxvPrJibuDDVxuInpu" />
           <entry key="autoReloadPlugins" value="true" />
         </map>
       </option>
