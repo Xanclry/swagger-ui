@@ -2,7 +2,7 @@
     <id>com.github.xanclry.swaggerui</id>
     <name>Endpoint UI Codegen</name>
     <vendor>xanclry</vendor>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
     <description>Simple Swagger/OpenAPI endpoint generator tool. Settings can be accessed by Settings -> Swagger UI. Plugin menu is in Tools -> Swagger Codegen</description>
 
     <!-- Product and plugin compatibility requirements -->
