@@ -2,6 +2,7 @@ package com.github.xanclry.swaggerui.actions
 
 import com.github.xanclry.swaggerui.MyBundle
 import com.github.xanclry.swaggerui.codegen.CodegenFactory
+import com.github.xanclry.swaggerui.codegen.exception.LanguageNotSupportedException
 import com.github.xanclry.swaggerui.dialog.ControllerGenerationDialogWrapper
 import com.github.xanclry.swaggerui.dialog.GenerateControllerDto
 import com.github.xanclry.swaggerui.util.Notifier
@@ -58,9 +59,9 @@ class GenerateControllerAction : AnAction() {
         project: Project,
         data: GenerateControllerDto
     ) {
-        val codegen = CodegenFactory.factoryMethod(data.language).createCodegen(project)
         var newPsiFile: PsiFile? = null
         try {
+            val codegen = CodegenFactory.factoryMethod(data.language).createCodegen(project)
             newPsiFile = codegen.generateEmptyController(data.path, project)
             val psiDirectory: PsiDirectory =
                 PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualFile)
@@ -78,6 +79,8 @@ class GenerateControllerAction : AnAction() {
                 "notification.codegen.error.fileAlreadyExist",
                 NotificationType.ERROR
             )
+        } catch (e: LanguageNotSupportedException) {
+            Notifier.notifyProject(project, e.message!!, NotificationType.ERROR)
         } finally {
             newPsiFile?.clearCaches()
         }

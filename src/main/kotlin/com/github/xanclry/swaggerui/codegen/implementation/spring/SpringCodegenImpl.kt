@@ -1,8 +1,8 @@
-package com.github.xanclry.swaggerui.codegen.implementation.java
+package com.github.xanclry.swaggerui.codegen.implementation.spring
 
 import com.github.xanclry.swaggerui.codegen.Codegen
 import com.github.xanclry.swaggerui.codegen.CodegenAvailability
-import com.github.xanclry.swaggerui.codegen.implementation.java.util.JavaSyntaxUtil
+import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSyntaxUtil
 import com.github.xanclry.swaggerui.codegen.util.EndpointsUtil
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
@@ -16,9 +16,9 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
-class JavaCodegenImpl(project: Project) : Codegen {
+class SpringCodegenImpl(project: Project) : Codegen {
 
-    private val syntaxUtil = JavaSyntaxUtil()
+    private val syntaxUtil = SpringSyntaxUtil()
     private val endpointsUtil = EndpointsUtil(project)
 
     override fun isFileSuitable(document: Document): CodegenAvailability {

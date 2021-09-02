@@ -1,4 +1,4 @@
-package com.github.xanclry.swaggerui.codegen.implementation.java.util
+package com.github.xanclry.swaggerui.codegen.implementation.spring.util
 
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
@@ -7,7 +7,7 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.ApiResponse
 
-class JavaSyntaxUtil {
+class SpringSyntaxUtil {
     fun getControllerPath(text: String): String {
         val regex = "@RequestMapping.*?\"(.+?)\"".toRegex()
         val find = regex.find(text)?.groupValues?.get(1)
