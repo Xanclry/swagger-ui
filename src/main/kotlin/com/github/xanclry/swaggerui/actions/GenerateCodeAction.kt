@@ -2,6 +2,7 @@ package com.github.xanclry.swaggerui.actions
 
 import com.github.xanclry.swaggerui.codegen.CodegenFactory
 import com.github.xanclry.swaggerui.codegen.Language
+import com.github.xanclry.swaggerui.codegen.exception.LanguageNotSupportedException
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -27,25 +28,29 @@ class GenerateCodeAction : AnAction() {
     }
 
     private fun generateCode(psiFile: PsiFile, editor: Editor, project: Project) {
-        val lang: Language = Language.valueOf(psiFile.language.id)
-        val codegen = CodegenFactory.factoryMethod(lang).createCodegen(project)
+        try {
+            val lang: Language = Language.parseJetbrainsLanguage(psiFile.language)
+            val codegen = CodegenFactory.factoryMethod(lang).createCodegen(project)
 
-        val codegenCheckResult = codegen.isFileSuitable(editor.document)
+            val codegenCheckResult = codegen.isFileSuitable(editor.document)
 
-        if (codegenCheckResult.isAvailable) {
-            val generatedCode = codegen.generateCode(project, editor)
-            val offsetForNewCode = codegen.offsetForNewCode(editor.document)
-            WriteCommandAction.runWriteCommandAction(project) {
-                editor.document.insertString(offsetForNewCode, generatedCode)
+            if (codegenCheckResult.isAvailable) {
+                val generatedCode = codegen.generateCode(project, editor)
+                val offsetForNewCode = codegen.offsetForNewCode(editor.document)
+                WriteCommandAction.runWriteCommandAction(project) {
+                    editor.document.insertString(offsetForNewCode, generatedCode)
+                }
+                editor.caretModel.moveToOffset(offsetForNewCode)
+            } else {
+                codegenCheckResult.reason?.let {
+                    Notifier.notifyProjectWithMessageFromBundle(
+                        project,
+                        it, NotificationType.ERROR
+                    )
+                }
             }
-            editor.caretModel.moveToOffset(offsetForNewCode)
-        } else {
-            codegenCheckResult.reason?.let {
-                Notifier.notifyProjectWithMessageFromBundle(
-                    project,
-                    it, NotificationType.ERROR
-                )
-            }
+        } catch (e: LanguageNotSupportedException) {
+            Notifier.notifyProject(project, e.message!!, NotificationType.ERROR)
         }
     }
 

@@ -7,6 +7,7 @@ import com.github.xanclry.swaggerui.codegen.util.EndpointsUtil
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.util.Notifier
+import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -20,6 +21,7 @@ class SpringCodegenImpl(project: Project) : Codegen {
 
     private val syntaxUtil = SpringSyntaxUtil()
     private val endpointsUtil = EndpointsUtil(project)
+    private val language = Language.findLanguageByID("JAVA")!!
 
     override fun isFileSuitable(document: Document): CodegenAvailability {
         val code = document.text
@@ -70,9 +72,8 @@ class SpringCodegenImpl(project: Project) : Codegen {
     }
 
     override fun generateEmptyController(path: String, project: Project): PsiFile {
-        // todo fix deprecation
         val newPsiFile =
-            PsiFileFactory.getInstance(project).createFileFromText(getFilename(path), generateEmptyControllerCode(path))
+            PsiFileFactory.getInstance(project).createFileFromText(getFilename(path), language, generateEmptyControllerCode(path))
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(newPsiFile)
         CodeStyleManager.getInstance(project).reformat(newPsiFile)
         return newPsiFile

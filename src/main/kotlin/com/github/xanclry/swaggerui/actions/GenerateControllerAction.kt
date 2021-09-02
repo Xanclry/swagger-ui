@@ -65,11 +65,13 @@ class GenerateControllerAction : AnAction() {
         var newPsiFile: PsiFile? = null
         try {
             val codegen = CodegenFactory.factoryMethod(data.language).createCodegen(project)
-            newPsiFile = codegen.generateEmptyController(data.path, project)
-            val psiDirectory: PsiDirectory =
-                PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualDirectory)
-            val document = commitNewFile(project, psiDirectory, newPsiFile)
-
+            var document: Document? = null
+            WriteCommandAction.runWriteCommandAction(project) {
+                newPsiFile = codegen.generateEmptyController(data.path, project)
+                val psiDirectory: PsiDirectory =
+                    PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualDirectory)
+                document = commitNewFile(project, psiDirectory, newPsiFile!!)
+            }
             openEditorOnNewFile(project, document)
         } catch (e: IncorrectOperationException) {
             Notifier.notifyProjectWithMessageFromBundle(
@@ -90,14 +92,11 @@ class GenerateControllerAction : AnAction() {
         project: Project,
         psiDirectory: PsiDirectory,
         newPsiFile: PsiFile,
-    ): Document? {
-        var document: Document? = null
-        WriteCommandAction.runWriteCommandAction(project) {
-            val savedPsiFile = psiDirectory.add(newPsiFile)
-            val psiDocumentManager = PsiDocumentManager.getInstance(project)
-            document = psiDocumentManager.getDocument(savedPsiFile as PsiFile)
-            psiDocumentManager.commitDocument(document!!)
-        }
+    ): Document {
+        val savedPsiFile = psiDirectory.add(newPsiFile)
+        val psiDocumentManager = PsiDocumentManager.getInstance(project)
+        val document = psiDocumentManager.getDocument(savedPsiFile as PsiFile)
+        psiDocumentManager.commitDocument(document!!)
         return document
     }
 

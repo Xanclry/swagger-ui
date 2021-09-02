@@ -34,8 +34,8 @@
         <group id="com.github.xanclry.swaggerui.groups.ProjectViewPopupMenu" popup="true" text="Endpoint UI Codegen" >
             <action class="com.github.xanclry.swaggerui.actions.GenerateControllerAction"
                     id="com.github.xanclry.swaggerui.actions.GenerateControllerAction"
-                    text="Generate Controller in This Package..." />
-            <add-to-group group-id="ProjectViewPopupMenu" />
+                    text="Controller" />
+            <add-to-group group-id="NewGroup" />
         </group>
 
 
