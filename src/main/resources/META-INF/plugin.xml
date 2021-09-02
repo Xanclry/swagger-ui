@@ -8,6 +8,7 @@
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
 
 
     <extensions defaultExtensionNs="com.intellij">
@@ -28,6 +29,13 @@
             <action class="com.github.xanclry.swaggerui.actions.GenerateCodeAction"
                     id="com.github.xanclry.swaggerui.actions.GenerateCodeAction"
                     text="Generate Endpoints In Current Controller" icon="AllIcons.Actions.PrettyPrint"/>
+        </group>
+
+        <group id="com.github.xanclry.swaggerui.groups.ProjectViewPopupMenu" popup="true" text="Endpoint UI Codegen" >
+            <action class="com.github.xanclry.swaggerui.actions.GenerateControllerAction"
+                    id="com.github.xanclry.swaggerui.actions.GenerateControllerAction"
+                    text="Generate Controller in This Package..." />
+            <add-to-group group-id="ProjectViewPopupMenu" />
         </group>
 
 

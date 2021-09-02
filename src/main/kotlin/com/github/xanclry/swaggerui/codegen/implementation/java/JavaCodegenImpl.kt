@@ -11,6 +11,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
 class JavaCodegenImpl(project: Project) : Codegen {
 
@@ -56,6 +60,24 @@ class JavaCodegenImpl(project: Project) : Codegen {
         return ""
     }
 
+    private fun generateEmptyControllerCode(path: String): String {
+        val className = getClassname(path)
+        return """
+            |@org.springframework.web.bind.annotation.RestController
+            |@org.springframework.web.bind.annotation.RequestMapping("$path")
+            |public class $className {}
+        """.trimMargin()
+    }
+
+    override fun generateEmptyController(path: String, project: Project): PsiFile {
+        // todo fix deprecation
+        val newPsiFile =
+            PsiFileFactory.getInstance(project).createFileFromText(getFilename(path), generateEmptyControllerCode(path))
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(newPsiFile)
+        CodeStyleManager.getInstance(project).reformat(newPsiFile)
+        return newPsiFile
+    }
+
     override fun offsetForNewCode(document: Document): Int {
         return document.text.lastIndexOf("}") - 1
     }
@@ -67,5 +89,24 @@ class JavaCodegenImpl(project: Project) : Codegen {
 
     private fun hasRequestMapping(text: String): String? {
         return if (text.contains("@RequestMapping")) null else "notification.codegen.error.java.noRequestMapping"
+    }
+
+    private fun getClassname(path: String): String {
+        val reg = Regex("([/].)")
+        return path
+            .replace(reg) { matchResult: MatchResult -> matchResult.value.toUpperCase().substring(1) }
+            .replace("Api", "", true)
+            .replace("/", "")
+            .replace("Rest", "", true)
+            .plus("RestController")
+    }
+
+    private fun getExtension(): String {
+        return ".java"
+    }
+
+    override fun getFilename(path: String): String {
+        return getClassname(path)
+            .plus(getExtension())
     }
 }
