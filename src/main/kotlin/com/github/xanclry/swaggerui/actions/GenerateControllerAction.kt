@@ -13,6 +13,9 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
@@ -55,7 +58,7 @@ class GenerateControllerAction : AnAction() {
     }
 
     private fun generateCode(
-        virtualFile: VirtualFile,
+        virtualDirectory: VirtualFile,
         project: Project,
         data: GenerateControllerDto
     ) {
@@ -64,15 +67,10 @@ class GenerateControllerAction : AnAction() {
             val codegen = CodegenFactory.factoryMethod(data.language).createCodegen(project)
             newPsiFile = codegen.generateEmptyController(data.path, project)
             val psiDirectory: PsiDirectory =
-                PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualFile)
-            WriteCommandAction.runWriteCommandAction(project) {
-                psiDirectory.add(newPsiFile)
-                val psiDocumentManager = PsiDocumentManager.getInstance(project)
-                val document: Document? = psiDocumentManager.getDocument(newPsiFile)
-                if (document != null) {
-                    psiDocumentManager.commitDocument(document)
-                }
-            }
+                PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualDirectory)
+            val document = commitNewFile(project, psiDirectory, newPsiFile)
+
+            openEditorOnNewFile(project, document)
         } catch (e: IncorrectOperationException) {
             Notifier.notifyProjectWithMessageFromBundle(
                 project,
@@ -81,8 +79,36 @@ class GenerateControllerAction : AnAction() {
             )
         } catch (e: LanguageNotSupportedException) {
             Notifier.notifyProject(project, e.message!!, NotificationType.ERROR)
+        } catch (e: Exception) {
+            Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)
         } finally {
             newPsiFile?.clearCaches()
+        }
+    }
+
+    private fun commitNewFile(
+        project: Project,
+        psiDirectory: PsiDirectory,
+        newPsiFile: PsiFile,
+    ): Document? {
+        var document: Document? = null
+        WriteCommandAction.runWriteCommandAction(project) {
+            val savedPsiFile = psiDirectory.add(newPsiFile)
+            val psiDocumentManager = PsiDocumentManager.getInstance(project)
+            document = psiDocumentManager.getDocument(savedPsiFile as PsiFile)
+            psiDocumentManager.commitDocument(document!!)
+        }
+        return document
+    }
+
+    private fun openEditorOnNewFile(
+        project: Project,
+        document: Document?
+    ) {
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        val virtualFile = FileDocumentManager.getInstance().getFile(document!!)
+        if (virtualFile != null) {
+            fileEditorManager.openTextEditor(OpenFileDescriptor(project, virtualFile), true)
         }
     }
 }
