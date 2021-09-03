@@ -16,6 +16,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,24 +39,42 @@ class GenerateControllerAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+
         val controllerGenerationDialogWrapper = ControllerGenerationDialogWrapper()
         controllerGenerationDialogWrapper.title = MyBundle.message("dialog.generate.controller.title")
-
         controllerGenerationDialogWrapper.show()
-        val exitCode = controllerGenerationDialogWrapper.exitCode
 
+        val exitCode = controllerGenerationDialogWrapper.exitCode
         if (DialogWrapper.OK_EXIT_CODE == exitCode) {
-            val project = e.project
-            val virtualFile = e.dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
-            if (project != null && virtualFile != null) {
-                generateCode(virtualFile, project, controllerGenerationDialogWrapper.data)
-            } else {
-                Notifier.notifyProjectWithMessageFromBundle(
-                    project,
-                    "notification.codegen.error",
-                    NotificationType.ERROR
-                )
-            }
+            handleGenerationConfirmation(e, controllerGenerationDialogWrapper)
+        }
+    }
+
+    private fun handleGenerationConfirmation(
+        e: AnActionEvent,
+        controllerGenerationDialogWrapper: ControllerGenerationDialogWrapper
+    ) {
+        var document: Document? = null
+        val project = e.project
+        val virtualFile = e.dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
+        if (project != null && virtualFile != null) {
+
+            ProgressManager.getInstance()
+                .run(object : Task.Modal(project, MyBundle.message("modal.generating.controller.title"), false) {
+                    override fun run(indicator: ProgressIndicator) {
+                        indicator.isIndeterminate = false
+                        indicator.text = MyBundle.message("modal.generating.controller.message")
+                        document = generateCode(virtualFile, project, controllerGenerationDialogWrapper.data)
+                    }
+                })
+
+            openEditorOnNewFile(project, document)
+        } else {
+            Notifier.notifyProjectWithMessageFromBundle(
+                project,
+                "notification.codegen.error",
+                NotificationType.ERROR
+            )
         }
     }
 
@@ -61,7 +82,7 @@ class GenerateControllerAction : AnAction() {
         virtualDirectory: VirtualFile,
         project: Project,
         data: GenerateControllerDto
-    ) {
+    ): Document? {
         var newPsiFile: PsiFile? = null
         try {
             val codegen = CodegenFactory.factoryMethod(data.language).createCodegen(project)
@@ -77,7 +98,7 @@ class GenerateControllerAction : AnAction() {
                 document = commitNewFile(project, psiDirectory, newPsiFile!!)
 
             }
-            openEditorOnNewFile(project, document)
+            return document
         } catch (e: IncorrectOperationException) {
             Notifier.notifyProjectWithMessageFromBundle(
                 project,
@@ -91,6 +112,7 @@ class GenerateControllerAction : AnAction() {
         } finally {
             newPsiFile?.clearCaches()
         }
+        return null
     }
 
     private fun commitNewFile(
