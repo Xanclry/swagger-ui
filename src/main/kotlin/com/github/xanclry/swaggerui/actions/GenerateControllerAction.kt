@@ -66,11 +66,16 @@ class GenerateControllerAction : AnAction() {
         try {
             val codegen = CodegenFactory.factoryMethod(data.language).createCodegen(project)
             var document: Document? = null
+            var code = ""
+            if (!data.generateEmpty) {
+                code = codegen.generateEndpointsCodeWithPath(project, code, data.path)
+            }
             WriteCommandAction.runWriteCommandAction(project) {
-                newPsiFile = codegen.generateEmptyController(data.path, project)
+                newPsiFile = codegen.generateController(data.path, project, true, code)
                 val psiDirectory: PsiDirectory =
                     PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualDirectory)
                 document = commitNewFile(project, psiDirectory, newPsiFile!!)
+
             }
             openEditorOnNewFile(project, document)
         } catch (e: IncorrectOperationException) {

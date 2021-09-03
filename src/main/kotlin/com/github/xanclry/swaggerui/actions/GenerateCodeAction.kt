@@ -35,7 +35,7 @@ class GenerateCodeAction : AnAction() {
             val codegenCheckResult = codegen.isFileSuitable(editor.document)
 
             if (codegenCheckResult.isAvailable) {
-                val generatedCode = codegen.generateCode(project, editor)
+                val generatedCode = codegen.generateEndpointsCodePathUnknown(project, editor.document.text)
                 val offsetForNewCode = codegen.offsetForNewCode(editor.document)
                 WriteCommandAction.runWriteCommandAction(project) {
                     editor.document.insertString(offsetForNewCode, generatedCode)

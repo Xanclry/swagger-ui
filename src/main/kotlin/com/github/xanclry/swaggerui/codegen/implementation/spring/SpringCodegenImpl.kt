@@ -10,7 +10,6 @@ import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -28,17 +27,16 @@ class SpringCodegenImpl(project: Project) : Codegen {
         return runChecks(code, ::isController, ::hasRequestMapping)
     }
 
-    override fun generateCode(project: Project, editor: Editor): String {
+    override fun generateEndpointsCodeWithPath(project: Project, existingCode: String, path: String): String {
         try {
-            val controllerPath = syntaxUtil.getControllerPath(editor.document.text)
-            val existingMappings: List<SwaggerMethodDto> = syntaxUtil.getEndpointsMappings(editor.document.text)
+            val existingMappings: List<SwaggerMethodDto> = syntaxUtil.getEndpointsMappings(existingCode)
             val endpointsToCreate: List<OperationWithMethodDto> =
-                endpointsUtil.getEndpointsToCreate(controllerPath, existingMappings)
+                endpointsUtil.getEndpointsToCreate(path, existingMappings)
 
             var accumulator = ""
 
             endpointsToCreate.forEach { endpoint ->
-                accumulator += syntaxUtil.generateEndpointCode(endpoint, controllerPath).plus("\n\n")
+                accumulator += syntaxUtil.generateEndpointCode(endpoint, path).plus("\n\n")
             }
             return accumulator
         } catch (e: IllegalArgumentException) {
@@ -62,21 +60,40 @@ class SpringCodegenImpl(project: Project) : Codegen {
         return ""
     }
 
-    private fun generateEmptyControllerCode(path: String): String {
+    override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): String {
+        val controllerPath = syntaxUtil.getControllerPath(existingCode)
+        return generateEndpointsCodeWithPath(project, existingCode, controllerPath)
+    }
+
+    private fun generateControllerCode(path: String, code: String): String {
         val className = getClassname(path)
         return """
             |@org.springframework.web.bind.annotation.RestController
             |@org.springframework.web.bind.annotation.RequestMapping("$path")
-            |public class $className {}
+            |public class $className {$code}
         """.trimMargin()
     }
 
-    override fun generateEmptyController(path: String, project: Project): PsiFile {
+    override fun generateController(
+        path: String,
+        project: Project,
+        shouldOptimizeCode: Boolean,
+        code: String
+    ): PsiFile {
         val newPsiFile =
-            PsiFileFactory.getInstance(project).createFileFromText(getFilename(path), language, generateEmptyControllerCode(path))
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(newPsiFile)
-        CodeStyleManager.getInstance(project).reformat(newPsiFile)
+            createPsiFileWithController(project, path, code)
+        if (shouldOptimizeCode) reformatAndOptimizeImports(newPsiFile, project)
         return newPsiFile
+    }
+
+    private fun createPsiFileWithController(project: Project, path: String, code: String): PsiFile {
+        return PsiFileFactory.getInstance(project)
+            .createFileFromText(getFilename(path), language, generateControllerCode(path, code))
+    }
+
+    private fun reformatAndOptimizeImports(psiFile: PsiFile, project: Project) {
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiFile)
+        CodeStyleManager.getInstance(project).reformat(psiFile)
     }
 
     override fun offsetForNewCode(document: Document): Int {
