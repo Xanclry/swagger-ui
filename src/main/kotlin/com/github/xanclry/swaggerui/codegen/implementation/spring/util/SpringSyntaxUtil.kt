@@ -1,4 +1,4 @@
-package com.github.xanclry.swaggerui.codegen.implementation.java.util
+package com.github.xanclry.swaggerui.codegen.implementation.spring.util
 
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
@@ -7,7 +7,7 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.ApiResponse
 
-class JavaSyntaxUtil {
+class SpringSyntaxUtil {
     fun getControllerPath(text: String): String {
         val regex = "@RequestMapping.*?\"(.+?)\"".toRegex()
         val find = regex.find(text)?.groupValues?.get(1)
@@ -44,18 +44,19 @@ class JavaSyntaxUtil {
         val apiOperationCode = generateApiOperationCode(operationWithMethodDto.operation)
         val apiResponsesCode = generateApiResponsesCode(operationWithMethodDto.operation)
         val methodCode = generateMethodCode(operationWithMethodDto)
-        return "    $bindAnnotationCode\n    $apiOperationCode\n    $apiResponsesCode\n$methodCode"
+        return "$bindAnnotationCode\n$apiOperationCode\n$apiResponsesCode\n$methodCode"
     }
 
     private fun generateMethodCode(operationWithMethodDto: OperationWithMethodDto): String {
         val returnType = generateMethodReturnType(operationWithMethodDto.operation)
         val parametersString = generateMethodParameters(operationWithMethodDto.operation)
         val methodName = generateMethodName(operationWithMethodDto)
+        val returnTypeInMethod = if (returnType == "void") "" else "null"
         return """
-            |    public $returnType $methodName($parametersString) {
-            |        // todo implement this method
-            |        return null;
-            |    }
+            |public $returnType $methodName($parametersString) {
+            |// todo implement this method
+            |return $returnTypeInMethod;
+            |}
         """.trimMargin()
     }
 
@@ -63,7 +64,7 @@ class JavaSyntaxUtil {
         var accumulator = ""
         if (operation.parameters != null) {
             operation.parameters.forEach { parameter ->
-                accumulator += "\n            ".plus(generateSingleMethodParameter(parameter)).plus(",")
+                accumulator += "\n".plus(generateSingleMethodParameter(parameter)).plus(",")
             }
 
             val lastComma = accumulator.lastIndexOf(",")
@@ -76,26 +77,30 @@ class JavaSyntaxUtil {
 
     private fun generateParameterHttpType(parameter: Parameter): String {
         return when (parameter.`in`) {
-            "path" -> """@PathVariable(name = "${parameter.name}")"""
+            "path" -> """@org.springframework.web.bind.annotation.PathVariable(name = "${parameter.name}")"""
 
             "query", "formData" -> {
                 val default =
                     if (parameter.schema.default != null) """, defaultValue = "${parameter.schema.default}"""" else ""
-                """@RequestParam(required = ${parameter.required ?: "false"}, name = "${parameter.name}"$default)"""
+                """@org.springframework.web.bind.annotation.RequestParam(required = ${parameter.required ?: "false"}, name = "${parameter.name}"$default)"""
             }
-            "body" -> "@RequestBody"
+            "body" -> "@org.springframework.web.bind.annotation.RequestBody"
             else -> ""
         }
     }
 
     private fun generateSingleMethodParameter(parameter: Parameter): String {
 
-        return """@ApiParam(value = "${parameter.description}") ${generateParameterHttpType(parameter)} ${
-        getParameterType(
-            parameter.schema.type,
-            parameter.schema.format,
-            parameter
-        )
+        return """@io.swagger.annotations.ApiParam(value = "${parameter.description}") ${
+            generateParameterHttpType(
+                parameter
+            )
+        } ${
+            getParameterType(
+                parameter.schema.type,
+                parameter.schema.format,
+                parameter
+            )
         } ${getParameterName(parameter)}"""
     }
 
@@ -119,14 +124,14 @@ class JavaSyntaxUtil {
             }
             "boolean" -> return "Boolean"
             "string" -> {
-                if (parameter.schema.enum != null) return "*Unknown Enum*"
+                if (parameter.schema.enum != null) return "Enum"
                 return when (format) {
-                    "date" -> "LocalDate"
+                    "date" -> "java.time.LocalDate"
                     else -> "String"
                 }
             }
             "array" -> {
-                return "List<>"
+                return "java.util.List"
             }
         }
         return "***"
@@ -156,8 +161,7 @@ class JavaSyntaxUtil {
                 responseAccumulator =
                     responseAccumulator.plus(generateSingleApiResponseCode(response.key, response.value)).plus(",\n")
             }
-            """@ApiResponses(value = { 
-                      |$responseAccumulator    })""".trimMargin()
+            """@io.swagger.annotations.ApiResponses(value = {$responseAccumulator})"""
         } else {
             ""
         }
@@ -166,13 +170,13 @@ class JavaSyntaxUtil {
     private fun generateSingleApiResponseCode(code: String, apiResponse: ApiResponse): String {
         val message: String =
             if (apiResponse.description != null) """, message = "${apiResponse.description}"""" else ""
-        return """            @ApiResponse(code = ${code}$message)"""
+        return """@io.swagger.annotations.ApiResponse(code = ${code}$message)"""
     }
 
     private fun generateApiOperationCode(operation: Operation): String {
         val description = operation.summary
         return if (description != null) {
-            """@ApiOperation(value = "$description")"""
+            """@io.swagger.annotations.ApiOperation(value = "$description")"""
         } else {
             ""
         }
@@ -182,9 +186,9 @@ class JavaSyntaxUtil {
         val methodNameInLowerCase = method.toString().toLowerCase()
         val methodName = methodNameInLowerCase.replaceRange(0, 1, methodNameInLowerCase[0].toString().toUpperCase())
         return if (path == "") {
-            """@${methodName}Mapping"""
+            """@org.springframework.web.bind.annotation.${methodName}Mapping"""
         } else {
-            """@${methodName}Mapping("$path")"""
+            """@org.springframework.web.bind.annotation.${methodName}Mapping("$path")"""
         }
     }
 }

@@ -11,7 +11,7 @@ class Notifier {
         private val NOTIFICATION_GROUP =
             NotificationGroup("Endpoint Load Config Notification", NotificationDisplayType.BALLOON, true)
 
-        private fun notifyProject(project: Project?, content: String, type: NotificationType) {
+        fun notifyProject(project: Project?, content: String, type: NotificationType) {
             NOTIFICATION_GROUP.createNotification(content, type).notify(project)
         }
 

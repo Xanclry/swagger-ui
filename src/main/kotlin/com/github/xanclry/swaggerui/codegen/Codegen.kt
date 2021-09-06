@@ -1,8 +1,9 @@
 package com.github.xanclry.swaggerui.codegen
 
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import kotlin.reflect.KFunction1
 
 interface Codegen {
@@ -21,6 +22,16 @@ interface Codegen {
     }
 
     fun isFileSuitable(document: Document): CodegenAvailability
-    fun generateCode(project: Project, editor: Editor): String
-    fun offsetForNewCode(document: Document): Int
+    fun getFilename(path: String): String
+
+    fun generateController(
+        path: String,
+        project: Project,
+        shouldOptimizeCode: Boolean = true,
+        code: String = ""
+    ): PsiFile
+
+    fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): GeneratedMethodsAdapter
+    fun generateEndpointsCodeWithPath(project: Project, existingCode: String, path: String): GeneratedMethodsAdapter
+    fun reformatAndOptimizeImports(psiElement: PsiElement, project: Project)
 }
