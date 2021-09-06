@@ -2,6 +2,7 @@ package com.github.xanclry.swaggerui.codegen.implementation.spring
 
 import com.github.xanclry.swaggerui.codegen.Codegen
 import com.github.xanclry.swaggerui.codegen.CodegenAvailability
+import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSyntaxUtil
 import com.github.xanclry.swaggerui.codegen.util.EndpointsUtil
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
@@ -11,6 +12,7 @@ import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -27,18 +29,22 @@ class SpringCodegenImpl(project: Project) : Codegen {
         return runChecks(code, ::isController, ::hasRequestMapping)
     }
 
-    override fun generateEndpointsCodeWithPath(project: Project, existingCode: String, path: String): String {
+    override fun generateEndpointsCodeWithPath(
+        project: Project,
+        existingCode: String,
+        path: String
+    ): GeneratedMethodsAdapter {
+        val accumulator = ArrayList<String>()
         try {
             val existingMappings: List<SwaggerMethodDto> = syntaxUtil.getEndpointsMappings(existingCode)
             val endpointsToCreate: List<OperationWithMethodDto> =
                 endpointsUtil.getEndpointsToCreate(path, existingMappings)
 
-            var accumulator = ""
 
             endpointsToCreate.forEach { endpoint ->
                 accumulator += syntaxUtil.generateEndpointCode(endpoint, path).plus("\n\n")
             }
-            return accumulator
+            return SpringGeneratedMethodsAdapter(accumulator, project)
         } catch (e: IllegalArgumentException) {
             Notifier.notifyProjectWithMessageFromBundle(
                 project,
@@ -57,10 +63,10 @@ class SpringCodegenImpl(project: Project) : Codegen {
                 Notifier.notifyProjectWithMessageFromBundle(project, e.message!!, NotificationType.ERROR)
             }
         }
-        return ""
+        return SpringGeneratedMethodsAdapter(ArrayList(), project)
     }
 
-    override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): String {
+    override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): GeneratedMethodsAdapter {
         val controllerPath = syntaxUtil.getControllerPath(existingCode)
         return generateEndpointsCodeWithPath(project, existingCode, controllerPath)
     }
@@ -91,13 +97,9 @@ class SpringCodegenImpl(project: Project) : Codegen {
             .createFileFromText(getFilename(path), language, generateControllerCode(path, code))
     }
 
-    private fun reformatAndOptimizeImports(psiFile: PsiFile, project: Project) {
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiFile)
-        CodeStyleManager.getInstance(project).reformat(psiFile)
-    }
-
-    override fun offsetForNewCode(document: Document): Int {
-        return document.text.lastIndexOf("}") - 1
+    override fun reformatAndOptimizeImports(psiElement: PsiElement, project: Project) {
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiElement)
+        CodeStyleManager.getInstance(project).reformat(psiElement)
     }
 
     private fun isController(text: String): String? {

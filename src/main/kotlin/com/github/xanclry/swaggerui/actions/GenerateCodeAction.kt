@@ -1,17 +1,11 @@
 package com.github.xanclry.swaggerui.actions
 
-import com.github.xanclry.swaggerui.codegen.CodegenFactory
-import com.github.xanclry.swaggerui.codegen.Language
-import com.github.xanclry.swaggerui.codegen.exception.LanguageNotSupportedException
+import com.github.xanclry.swaggerui.codegen.facade.GenerateMethodsFacade
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
 
 class GenerateCodeAction : AnAction() {
 
@@ -20,37 +14,11 @@ class GenerateCodeAction : AnAction() {
         val psiFile = e.getData(CommonDataKeys.PSI_FILE)
         val project = e.project
         val editor = e.getData(CommonDataKeys.EDITOR)
+        val generateMethodsFacade = GenerateMethodsFacade()
         if (project != null && psiFile != null && editor != null) {
-            generateCode(psiFile, editor, project)
+            generateMethodsFacade.generateCode(psiFile, editor, project)
         } else {
             Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)
-        }
-    }
-
-    private fun generateCode(psiFile: PsiFile, editor: Editor, project: Project) {
-        try {
-            val lang: Language = Language.parseJetbrainsLanguage(psiFile.language)
-            val codegen = CodegenFactory.factoryMethod(lang).createCodegen(project)
-
-            val codegenCheckResult = codegen.isFileSuitable(editor.document)
-
-            if (codegenCheckResult.isAvailable) {
-                val generatedCode = codegen.generateEndpointsCodePathUnknown(project, editor.document.text)
-                val offsetForNewCode = codegen.offsetForNewCode(editor.document)
-                WriteCommandAction.runWriteCommandAction(project) {
-                    editor.document.insertString(offsetForNewCode, generatedCode)
-                }
-                editor.caretModel.moveToOffset(offsetForNewCode)
-            } else {
-                codegenCheckResult.reason?.let {
-                    Notifier.notifyProjectWithMessageFromBundle(
-                        project,
-                        it, NotificationType.ERROR
-                    )
-                }
-            }
-        } catch (e: LanguageNotSupportedException) {
-            Notifier.notifyProject(project, e.message!!, NotificationType.ERROR)
         }
     }
 

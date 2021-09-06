@@ -131,7 +131,7 @@ class SpringSyntaxUtil {
                 }
             }
             "array" -> {
-                return "java.util.List<>"
+                return "java.util.List"
             }
         }
         return "***"
