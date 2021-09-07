@@ -29,6 +29,10 @@
             <action class="com.github.xanclry.swaggerui.actions.GenerateCodeAction"
                     id="com.github.xanclry.swaggerui.actions.GenerateCodeAction"
                     text="Generate Endpoints In Current Controller" icon="AllIcons.Actions.PrettyPrint"/>
+
+            <action class="com.github.xanclry.swaggerui.actions.SmartGenerationAction"
+                    id="com.github.xanclry.swaggerui.actions.SmartGenerationAction"
+                    text="Smart Generation..."/>
         </group>
 
         <group id="com.github.xanclry.swaggerui.groups.ProjectViewPopupMenu" popup="true" text="Endpoint UI Codegen" >

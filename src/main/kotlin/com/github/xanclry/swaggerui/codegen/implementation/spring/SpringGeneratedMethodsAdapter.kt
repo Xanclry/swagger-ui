@@ -15,8 +15,9 @@ class SpringGeneratedMethodsAdapter(private val methodList: List<String>, privat
     }
 
     override fun asPsiList(context: PsiElement?): List<PsiMethod> {
+        val psiJavaParserFacadeImpl = PsiJavaParserFacadeImpl(project)
         return methodList.stream()
-            .map { PsiJavaParserFacadeImpl(project).createMethodFromText(it, context) }
+            .map { psiJavaParserFacadeImpl.createMethodFromText(it, context) }
             .collect(Collectors.toList())
     }
 

@@ -3,10 +3,11 @@ package com.github.xanclry.swaggerui.codegen.implementation.spring
 import com.github.xanclry.swaggerui.codegen.Codegen
 import com.github.xanclry.swaggerui.codegen.CodegenAvailability
 import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
+import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSourceCodeParser
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSyntaxUtil
-import com.github.xanclry.swaggerui.codegen.util.EndpointsUtil
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
+import com.github.xanclry.swaggerui.services.ConfigurationFacade
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
@@ -21,12 +22,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 class SpringCodegenImpl(project: Project) : Codegen {
 
     private val syntaxUtil = SpringSyntaxUtil()
-    private val endpointsUtil = EndpointsUtil(project)
+    private val configurationFacade = ConfigurationFacade(project)
     private val language = Language.findLanguageByID("JAVA")!!
+    private val codeParser = SpringSourceCodeParser()
 
     override fun isFileSuitable(document: Document): CodegenAvailability {
         val code = document.text
-        return runChecks(code, ::isController, ::hasRequestMapping)
+        return runChecks(code, codeParser::isController, codeParser::hasRequestMapping)
     }
 
     override fun generateEndpointsCodeWithPath(
@@ -36,9 +38,9 @@ class SpringCodegenImpl(project: Project) : Codegen {
     ): GeneratedMethodsAdapter {
         val accumulator = ArrayList<String>()
         try {
-            val existingMappings: List<SwaggerMethodDto> = syntaxUtil.getEndpointsMappings(existingCode)
+            val existingMappings: List<SwaggerMethodDto> = codeParser.getEndpointsMappings(existingCode)
             val endpointsToCreate: List<OperationWithMethodDto> =
-                endpointsUtil.getEndpointsToCreate(path, existingMappings)
+                configurationFacade.identifyMissingEndpoints(path, existingMappings)
 
 
             endpointsToCreate.forEach { endpoint ->
@@ -67,12 +69,12 @@ class SpringCodegenImpl(project: Project) : Codegen {
     }
 
     override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): GeneratedMethodsAdapter {
-        val controllerPath = syntaxUtil.getControllerPath(existingCode)
+        val controllerPath = codeParser.getControllerPath(existingCode)
         return generateEndpointsCodeWithPath(project, existingCode, controllerPath)
     }
 
     private fun generateControllerCode(path: String, code: String): String {
-        val className = getClassname(path)
+        val className = generateFilenameFromControllerPath(path)
         return """
             |@org.springframework.web.bind.annotation.RestController
             |@org.springframework.web.bind.annotation.RequestMapping("$path")
@@ -94,7 +96,7 @@ class SpringCodegenImpl(project: Project) : Codegen {
 
     private fun createPsiFileWithController(project: Project, path: String, code: String): PsiFile {
         return PsiFileFactory.getInstance(project)
-            .createFileFromText(getFilename(path), language, generateControllerCode(path, code))
+            .createFileFromText(generateFilename(path), language, generateControllerCode(path, code))
     }
 
     override fun reformatAndOptimizeImports(psiElement: PsiElement, project: Project) {
@@ -102,16 +104,7 @@ class SpringCodegenImpl(project: Project) : Codegen {
         CodeStyleManager.getInstance(project).reformat(psiElement)
     }
 
-    private fun isController(text: String): String? {
-        return if (text.contains("@Controller") || text.contains("@RestController")) null
-        else "notification.codegen.error.java.noController"
-    }
-
-    private fun hasRequestMapping(text: String): String? {
-        return if (text.contains("@RequestMapping")) null else "notification.codegen.error.java.noRequestMapping"
-    }
-
-    private fun getClassname(path: String): String {
+    private fun generateFilenameFromControllerPath(path: String): String {
         val reg = Regex("([/].)")
         return path
             .replace(reg) { matchResult: MatchResult -> matchResult.value.toUpperCase().substring(1) }
@@ -125,8 +118,8 @@ class SpringCodegenImpl(project: Project) : Codegen {
         return ".java"
     }
 
-    override fun getFilename(path: String): String {
-        return getClassname(path)
+    override fun generateFilename(path: String): String {
+        return generateFilenameFromControllerPath(path)
             .plus(getExtension())
     }
 }
