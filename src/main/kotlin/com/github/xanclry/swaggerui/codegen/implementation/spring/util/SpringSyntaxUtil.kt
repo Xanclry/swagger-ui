@@ -1,42 +1,12 @@
 package com.github.xanclry.swaggerui.codegen.implementation.spring.util
 
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
-import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import io.swagger.models.HttpMethod
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.ApiResponse
 
 class SpringSyntaxUtil {
-    fun getControllerPath(text: String): String {
-        val regex = "@RequestMapping.*?\"(.+?)\"".toRegex()
-        val find = regex.find(text)?.groupValues?.get(1)
-        return find ?: ""
-    }
-
-    fun getEndpointsMappings(text: String): List<SwaggerMethodDto> {
-        val regex = "@([^R]{3,7})Mapping.*?\"(.+?)\"".toRegex()
-        val searchResult = regex.findAll(text)
-
-        val resultList: MutableList<SwaggerMethodDto> = ArrayList()
-
-        searchResult.forEach { matchResult ->
-            val method = HttpMethod.valueOf(matchResult.groupValues[1].toUpperCase())
-            val path = matchResult.groupValues[2]
-            val existingDto: SwaggerMethodDto? = resultList.find { dto ->
-                dto.path == path
-            }
-            if (existingDto != null) {
-                existingDto.methodSet.add(method)
-            } else {
-                val newDto = SwaggerMethodDto(HashSet(), path)
-                newDto.methodSet.add(method)
-                resultList.add(newDto)
-            }
-        }
-
-        return resultList
-    }
 
     fun generateEndpointCode(operationWithMethodDto: OperationWithMethodDto, controllerPath: String): String {
         val pathForEndpoint = operationWithMethodDto.path.removePrefix(controllerPath)

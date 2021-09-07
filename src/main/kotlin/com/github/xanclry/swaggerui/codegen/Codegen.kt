@@ -22,7 +22,7 @@ interface Codegen {
     }
 
     fun isFileSuitable(document: Document): CodegenAvailability
-    fun getFilename(path: String): String
+    fun generateFilename(path: String): String
 
     fun generateController(
         path: String,

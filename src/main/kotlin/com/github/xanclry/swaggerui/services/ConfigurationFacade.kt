@@ -1,18 +1,17 @@
-package com.github.xanclry.swaggerui.codegen.util
+package com.github.xanclry.swaggerui.services
 
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
-import com.github.xanclry.swaggerui.services.ConfigurationService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import io.swagger.models.HttpMethod
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.PathItem
 
-class EndpointsUtil(project: Project) {
+class ConfigurationFacade(project: Project) {
     private val configurationService = project.service<ConfigurationService>()
 
-    fun getEndpointsToCreate(
+    fun identifyMissingEndpoints(
         controllerPath: String,
         existingMappings: List<SwaggerMethodDto>
     ): List<OperationWithMethodDto> {

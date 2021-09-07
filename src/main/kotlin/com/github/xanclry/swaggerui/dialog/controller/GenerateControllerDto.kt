@@ -1,4 +1,4 @@
-package com.github.xanclry.swaggerui.dialog
+package com.github.xanclry.swaggerui.dialog.controller
 
 import com.github.xanclry.swaggerui.codegen.Language
 

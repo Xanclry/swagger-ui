@@ -2,7 +2,7 @@ package com.github.xanclry.swaggerui.actions
 
 import com.github.xanclry.swaggerui.MyBundle
 import com.github.xanclry.swaggerui.codegen.facade.GenerateControllerFacade
-import com.github.xanclry.swaggerui.dialog.ControllerGenerationDialogWrapper
+import com.github.xanclry.swaggerui.dialog.controller.ControllerGenerationDialogWrapper
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -21,11 +21,11 @@ class GenerateControllerAction : AnAction() {
         val controllerGenerationDialogWrapper = ControllerGenerationDialogWrapper()
         controllerGenerationDialogWrapper.title = MyBundle.message("dialog.generate.controller.title")
         controllerGenerationDialogWrapper.show()
-        val generateControllerFacade = GenerateControllerFacade()
 
         val exitCode = controllerGenerationDialogWrapper.exitCode
         if (DialogWrapper.OK_EXIT_CODE == exitCode) {
-            generateControllerFacade.generateCode(e, controllerGenerationDialogWrapper)
+            val generateControllerFacade = GenerateControllerFacade()
+            generateControllerFacade.generateCode(e, controllerGenerationDialogWrapper.data)
         }
     }
 
