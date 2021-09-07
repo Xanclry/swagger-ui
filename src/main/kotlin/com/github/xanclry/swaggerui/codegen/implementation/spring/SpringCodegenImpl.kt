@@ -26,7 +26,11 @@ class SpringCodegenImpl(project: Project) : Codegen {
     private val language = Language.findLanguageByID("JAVA")!!
     private val codeParser = SpringSourceCodeParser()
 
-    override fun isFileSuitable(document: Document): CodegenAvailability {
+    override fun parseExistingMappings(code: String, fullPath: Boolean): List<SwaggerMethodDto> {
+        return codeParser.getEndpointsMappings(code, fullPath)
+    }
+
+    override fun isController(document: Document): CodegenAvailability {
         val code = document.text
         return runChecks(code, codeParser::isController, codeParser::hasRequestMapping)
     }
@@ -38,7 +42,7 @@ class SpringCodegenImpl(project: Project) : Codegen {
     ): GeneratedMethodsAdapter {
         val accumulator = ArrayList<String>()
         try {
-            val existingMappings: List<SwaggerMethodDto> = codeParser.getEndpointsMappings(existingCode)
+            val existingMappings: List<SwaggerMethodDto> = parseExistingMappings(existingCode, false)
             val endpointsToCreate: List<OperationWithMethodDto> =
                 configurationFacade.identifyMissingEndpoints(path, existingMappings)
 
@@ -114,12 +118,13 @@ class SpringCodegenImpl(project: Project) : Codegen {
             .plus("RestController")
     }
 
-    private fun getExtension(): String {
-        return ".java"
+    override fun getExtension(): String {
+        return "java"
     }
 
     override fun generateFilename(path: String): String {
         return generateFilenameFromControllerPath(path)
+            .plus(".")
             .plus(getExtension())
     }
 }

@@ -20,7 +20,11 @@ class SpringSourceCodeParser {
         return find ?: ""
     }
 
-    fun getEndpointsMappings(text: String): List<SwaggerMethodDto> {
+    fun getEndpointsMappings(text: String, fullPath: Boolean): List<SwaggerMethodDto> {
+        var controllerPath = ""
+        if (fullPath) {
+            controllerPath = getControllerPath(text)
+        }
         val regex = "@([^R]{3,7})Mapping.*?\"(.+?)\"".toRegex()
         val searchResult = regex.findAll(text)
 
@@ -35,7 +39,7 @@ class SpringSourceCodeParser {
             if (existingDto != null) {
                 existingDto.methodSet.add(method)
             } else {
-                val newDto = SwaggerMethodDto(HashSet(), path)
+                val newDto = SwaggerMethodDto(HashSet(), controllerPath.plus(path))
                 newDto.methodSet.add(method)
                 resultList.add(newDto)
             }

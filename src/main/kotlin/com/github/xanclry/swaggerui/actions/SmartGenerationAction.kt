@@ -1,6 +1,7 @@
 package com.github.xanclry.swaggerui.actions
 
 import com.github.xanclry.swaggerui.MyBundle
+import com.github.xanclry.swaggerui.codegen.facade.SmartGenerationFacade
 import com.github.xanclry.swaggerui.dialog.smart.ModuleDto
 import com.github.xanclry.swaggerui.dialog.smart.SmartGenerationDialogWrapper
 import com.intellij.openapi.actionSystem.AnAction
@@ -29,10 +30,10 @@ class SmartGenerationAction : AnAction() {
         dialog.show()
 
         val exitCode = dialog.exitCode
-        if (DialogWrapper.OK_EXIT_CODE == exitCode && dialog.selectedModule != null) {
+        if (DialogWrapper.OK_EXIT_CODE == exitCode && dialog.selectedModule != null && dialog.selectedLanguage != null) {
             val (_, id) = dialog.selectedModule!!
-            val module = modules[id]
-            println()
+            val lang = dialog.selectedLanguage!!
+            SmartGenerationFacade(lang, project).runSmartGeneration(modules[id])
         }
     }
 }

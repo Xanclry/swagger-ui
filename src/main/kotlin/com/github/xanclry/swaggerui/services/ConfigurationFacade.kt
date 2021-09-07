@@ -32,6 +32,10 @@ class ConfigurationFacade(project: Project) {
         return endpointsToCreate
     }
 
+    fun identifyMissingEndpointsInProject(existingMappings: Collection<SwaggerMethodDto>): List<OperationWithMethodDto> {
+        return emptyList()
+    }
+
     private fun handleOpenApiPath(
         entryFromConfig: MutableMap.MutableEntry<String, PathItem>,
         existingMappings: List<SwaggerMethodDto>,

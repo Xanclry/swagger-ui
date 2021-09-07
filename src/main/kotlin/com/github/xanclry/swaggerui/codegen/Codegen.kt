@@ -1,5 +1,6 @@
 package com.github.xanclry.swaggerui.codegen
 
+import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -21,7 +22,9 @@ interface Codegen {
         return result
     }
 
-    fun isFileSuitable(document: Document): CodegenAvailability
+    fun parseExistingMappings(code: String, fullPath: Boolean): List<SwaggerMethodDto>
+
+    fun isController(document: Document): CodegenAvailability
     fun generateFilename(path: String): String
 
     fun generateController(
@@ -34,4 +37,5 @@ interface Codegen {
     fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): GeneratedMethodsAdapter
     fun generateEndpointsCodeWithPath(project: Project, existingCode: String, path: String): GeneratedMethodsAdapter
     fun reformatAndOptimizeImports(psiElement: PsiElement, project: Project)
+    fun getExtension(): String
 }

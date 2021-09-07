@@ -23,7 +23,7 @@ class GenerateMethodsFacade {
             val lang: Language = Language.parseJetbrainsLanguage(psiFile.language)
             val codegen = CodegenFactory.factoryMethod(lang).createCodegen(project)
 
-            val codegenCheckResult = codegen.isFileSuitable(editor.document)
+            val codegenCheckResult = codegen.isController(editor.document)
 
             if (codegenCheckResult.isAvailable) {
                 val classes: Array<PsiClass> = (psiFile as PsiJavaFile).classes
