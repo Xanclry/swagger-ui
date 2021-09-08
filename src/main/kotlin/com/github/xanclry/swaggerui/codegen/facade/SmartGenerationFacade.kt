@@ -3,6 +3,7 @@ package com.github.xanclry.swaggerui.codegen.facade
 import com.github.xanclry.swaggerui.codegen.CodegenFactory
 import com.github.xanclry.swaggerui.codegen.Language
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
+import com.github.xanclry.swaggerui.services.ConfigurationFacade
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -16,12 +17,15 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
 
     private val codegen = CodegenFactory.factoryMethod(language).createCodegen(project)
     private val fileDocumentManager = FileDocumentManager.getInstance()
+    private val configurationFacade = ConfigurationFacade(project)
 
     fun runSmartGeneration(module: Module) {
         val sourceRoots = ModuleRootManager.getInstance(module).sourceRoots
         try {
             val existingMappings: MutableSet<SwaggerMethodDto> = HashSet()
             sourceRoots.forEach { iterateVirtualFile(it, existingMappings) }
+            val missingEndpoints =
+                configurationFacade.identifyMissingEndpointsInProject(existingMappings)
             println()
         } catch (e: Exception) {
             Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)

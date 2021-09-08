@@ -20,25 +20,40 @@ class ConfigurationFacade(project: Project) {
             SwaggerMethodDto(mapping.methodSet, controllerPath.plus(mapping.path))
         }
 
-        val openApiConfig: OpenAPI = configurationService.getConfiguration()
+        val openApiConfig: OpenAPI = getConfiguration()
         val endpointsForCurrentControllerFromConfig: List<MutableMap.MutableEntry<String, PathItem>> =
             openApiConfig.paths.entries.filter { entry ->
                 entry.key.startsWith(controllerPath)
             }
-        val endpointsToCreate: MutableList<OperationWithMethodDto> = ArrayList()
-        endpointsForCurrentControllerFromConfig.forEach { entryFromConfig ->
-            handleOpenApiPath(entryFromConfig, fullPathMappings, endpointsToCreate)
+        return differenceBetweenAllAndExisting(endpointsForCurrentControllerFromConfig, fullPathMappings)
+    }
+
+    private fun differenceBetweenAllAndExisting(
+        all: Collection<MutableMap.MutableEntry<String, PathItem>>,
+        existing: Collection<SwaggerMethodDto>
+    ): List<OperationWithMethodDto> {
+        val accumulator: MutableList<OperationWithMethodDto> = ArrayList()
+        all.forEach { entryFromConfig ->
+            handleOpenApiPath(entryFromConfig, existing, accumulator)
         }
-        return endpointsToCreate
+        return accumulator
     }
 
     fun identifyMissingEndpointsInProject(existingMappings: Collection<SwaggerMethodDto>): List<OperationWithMethodDto> {
-        return emptyList()
+        val openApiConfig: OpenAPI = getConfiguration()
+        val allEndpointsFromConfig: List<MutableMap.MutableEntry<String, PathItem>> =
+            openApiConfig.paths.entries.toList()
+
+        return differenceBetweenAllAndExisting(allEndpointsFromConfig, existingMappings)
+    }
+
+    private fun getConfiguration(): OpenAPI {
+        return configurationService.getConfiguration()
     }
 
     private fun handleOpenApiPath(
         entryFromConfig: MutableMap.MutableEntry<String, PathItem>,
-        existingMappings: List<SwaggerMethodDto>,
+        existingMappings: Collection<SwaggerMethodDto>,
         result: MutableList<OperationWithMethodDto>
     ) {
         val path = entryFromConfig.key
