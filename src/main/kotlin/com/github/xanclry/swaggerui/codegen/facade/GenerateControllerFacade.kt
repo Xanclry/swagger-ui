@@ -17,11 +17,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.psi.impl.file.PsiDirectoryImpl
 import com.intellij.util.IncorrectOperationException
 
 class GenerateControllerFacade {
@@ -71,10 +67,7 @@ class GenerateControllerFacade {
             }
             WriteCommandAction.runWriteCommandAction(project) {
                 newPsiFile = codegen.generateController(generateControllerDto.path, project, true, code)
-                val psiDirectory: PsiDirectory =
-                    PsiDirectoryImpl(PsiManager.getInstance(project) as PsiManagerImpl, virtualDirectory)
-                document = documentUtil.commitNewFile(project, psiDirectory, newPsiFile!!)
-
+                document = documentUtil.createFileInDirectory(project, newPsiFile!!, virtualDirectory)
             }
             return document
         } catch (e: IncorrectOperationException) {

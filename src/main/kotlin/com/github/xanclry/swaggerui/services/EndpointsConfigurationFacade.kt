@@ -2,13 +2,15 @@ package com.github.xanclry.swaggerui.services
 
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
+import com.github.xanclry.swaggerui.model.file.FileMetadataDto
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import io.swagger.models.HttpMethod
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.PathItem
+import org.apache.commons.lang.StringUtils
 
-class ConfigurationFacade(project: Project) {
+class EndpointsConfigurationFacade(project: Project) {
     private val configurationService = project.service<ConfigurationService>()
 
     fun identifyMissingEndpoints(
@@ -26,6 +28,28 @@ class ConfigurationFacade(project: Project) {
                 entry.key.startsWith(controllerPath)
             }
         return differenceBetweenAllAndExisting(endpointsForCurrentControllerFromConfig, fullPathMappings)
+    }
+
+    fun computeFileOperationsMap(
+        missingEndpoints: List<OperationWithMethodDto>,
+        parsingFunction: (operationWithMethod: OperationWithMethodDto) -> FileMetadataDto
+    ): Map<FileMetadataDto, List<OperationWithMethodDto>> {
+        val fileOperationMap: MutableMap<FileMetadataDto, MutableList<OperationWithMethodDto>> = HashMap()
+        missingEndpoints.forEach {
+            val fileMetadataDto = parsingFunction.invoke(it)
+            fileOperationMap.computeIfAbsent(fileMetadataDto) { ArrayList() }
+            fileOperationMap[fileMetadataDto]?.add(it)
+        }
+        return fileOperationMap
+    }
+
+    fun findEndpointsCommonPrefix(endpointsPaths: List<String>): String {
+        val commonPrefix = StringUtils.getCommonPrefix(endpointsPaths.toTypedArray())
+        return if (commonPrefix == "") {
+            "/"
+        } else {
+            commonPrefix
+        }
     }
 
     private fun differenceBetweenAllAndExisting(

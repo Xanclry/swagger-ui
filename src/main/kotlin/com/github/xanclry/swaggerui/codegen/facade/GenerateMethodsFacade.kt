@@ -13,9 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
 
 class GenerateMethodsFacade {
     fun generateCode(psiFile: PsiFile, editor: Editor, project: Project) {
@@ -25,8 +23,8 @@ class GenerateMethodsFacade {
 
             val codegenCheckResult = codegen.isController(editor.document)
 
-            if (codegenCheckResult.isAvailable) {
-                val classes: Array<PsiClass> = (psiFile as PsiJavaFile).classes
+            if (codegenCheckResult.isController) {
+
                 var psiMethods: GeneratedMethodsAdapter? = null
 
                 ProgressManager.getInstance()
@@ -37,15 +35,12 @@ class GenerateMethodsFacade {
                             psiMethods = codegen.generateEndpointsCodePathUnknown(project, editor.document.text)
                         }
                     })
-                if (psiMethods != null) {
-                    WriteCommandAction.runWriteCommandAction(project) {
-                        psiMethods!!.asPsiList(psiFile).forEach { classes[0].add(it) }
-                        codegen.reformatAndOptimizeImports(psiFile, project)
-                    }
+                WriteCommandAction.runWriteCommandAction(project) {
+                    codegen.addMethodsToPsiFile(psiMethods, psiFile, project)
                 }
 
             } else {
-                codegenCheckResult.reason?.let {
+                codegenCheckResult.error?.let {
                     Notifier.notifyProjectWithMessageFromBundle(
                         project,
                         it, NotificationType.ERROR

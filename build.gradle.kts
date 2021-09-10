@@ -37,6 +37,9 @@ dependencies {
         exclude(group = "org.slf4j", module = "slf4j-api")
     }
 
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
 }
 

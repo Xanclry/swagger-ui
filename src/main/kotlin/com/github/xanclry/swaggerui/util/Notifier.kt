@@ -15,6 +15,16 @@ class Notifier {
             NOTIFICATION_GROUP.createNotification(content, type).notify(project)
         }
 
+        fun notifyProjectWithContentBeforeBundleMessage(project: Project?, content: String, key: String, type: NotificationType) {
+            val msg = content.plus(MyBundle.message(key))
+            notifyProject(project, msg, type)
+        }
+
+        fun notifyProjectWithContentAfterBundleMessage(project: Project?, content: String, key: String, type: NotificationType) {
+            val msg = MyBundle.message(key).plus(content)
+            notifyProject(project, msg, type)
+        }
+
         fun notifyProjectWithMessageFromBundle(project: Project?, key: String, type: NotificationType = NotificationType.INFORMATION) {
             val msg = MyBundle.message(key)
             notifyProject(project, msg, type)
