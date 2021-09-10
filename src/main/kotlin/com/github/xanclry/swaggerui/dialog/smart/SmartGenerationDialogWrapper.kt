@@ -9,7 +9,7 @@ import javax.swing.JComponent
 class SmartGenerationDialogWrapper(private val moduleList: List<ModuleDto>) : DialogWrapper(true) {
 
     var selectedModule: ModuleDto? = null
-    var selectedLanguage: Language? = null
+    var selectedLanguage: Language = Language.SPRING
 
     init {
         super.init()
