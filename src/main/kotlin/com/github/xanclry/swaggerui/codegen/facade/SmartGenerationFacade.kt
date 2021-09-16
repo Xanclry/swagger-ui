@@ -7,7 +7,8 @@ import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
-import com.github.xanclry.swaggerui.services.EndpointsConfigurationFacade
+import com.github.xanclry.swaggerui.services.facade.EndpointsConfigurationFacade
+import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.command.WriteCommandAction
@@ -20,28 +21,33 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class SmartGenerationFacade(language: Language, private val project: Project) {
 
-    private val codegen = CodegenFactory.factoryMethod(language).createCodegen(project)
+    private val endpointsGenerator = CodegenFactory.factoryMethod(language).createEndpointsGenerator(project)
+    private val modelGenerator = CodegenFactory.factoryMethod(language).createModelGenerator(project)
     private val fileDocumentManager = FileDocumentManager.getInstance()
     private val endpointsConfigurationFacade = EndpointsConfigurationFacade(project)
+    private val modelConfigurationFacade = ModelConfigurationFacade(project)
 
-    fun runSmartGeneration(module: Module) {
-        val sourceRoots = ModuleRootManager.getInstance(module).sourceRoots
+    fun runSmartGeneration(webModule: Module, modelModule: Module) {
+        val webSourceRoots: Array<VirtualFile> = ModuleRootManager.getInstance(webModule).sourceRoots
+        val modelSourceRoots: Array<VirtualFile> = ModuleRootManager.getInstance(webModule).sourceRoots
         var editedFilesCounter = 0
         try {
-            val existingMappings: MutableSet<SwaggerMethodDto> = HashSet()
-            val sourceRoot: VirtualFile =
-                sourceRoots.filter { !it.path.contains("test") && !it.path.contains("resources") }[0]
-            iterateVirtualFile(sourceRoot, existingMappings)
-            val missingEndpoints: List<OperationWithMethodDto> =
-                endpointsConfigurationFacade.identifyMissingEndpointsInProject(existingMappings)
-            val fileOperationsMap: Map<FileMetadataDto, List<OperationWithMethodDto>> =
-                endpointsConfigurationFacade.computeFileOperationsMap(missingEndpoints, codegen::parsePathAndFilename)
+            val webSourceRoot = filterSourceRoots(webSourceRoots)
+            val modelSourceRoot = filterSourceRoots(modelSourceRoots)
+            val fileOperationsMap = computeEndpointsOperationMap(webSourceRoot)
+            val modelOperations = computeModelOperationMap(modelSourceRoot)
 
             WriteCommandAction.runWriteCommandAction(project) {
                 fileOperationsMap.forEach { (fileMetadata, operationList) ->
                     val controllerPath =
                         endpointsConfigurationFacade.findEndpointsCommonPrefix(operationList.map { it.path })
-                    codegen.createOrFindControllerAndGenerateMethods(project, sourceRoot, fileMetadata, controllerPath, operationList)
+                    endpointsGenerator.createOrFindControllerAndGenerateMethods(
+                        project,
+                        webSourceRoot,
+                        fileMetadata,
+                        controllerPath,
+                        operationList
+                    )
                     editedFilesCounter++
                 }
             }
@@ -58,8 +64,30 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         } catch (e: Exception) {
             Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)
         } finally {
-            Notifier.notifyProjectWithContentAfterBundleMessage(project, editedFilesCounter.toString(), "notification.codegen.smart.success.filesAffected", NotificationType.INFORMATION)
+            Notifier.notifyProjectWithContentAfterBundleMessage(
+                project,
+                editedFilesCounter.toString(),
+                "notification.codegen.smart.success.filesAffected",
+                NotificationType.INFORMATION
+            )
         }
+    }
+
+    private fun filterSourceRoots(sourceRoots: Array<VirtualFile>): VirtualFile {
+        return sourceRoots.filter { !it.path.contains("test") && !it.path.contains("resources") }[0]
+    }
+
+    private fun computeEndpointsOperationMap(sourceRoot: VirtualFile): Map<FileMetadataDto, List<OperationWithMethodDto>> {
+        val existingMappings: MutableSet<SwaggerMethodDto> = HashSet()
+        iterateVirtualFile(sourceRoot, existingMappings)
+        val missingEndpoints: List<OperationWithMethodDto> =
+            endpointsConfigurationFacade.identifyMissingEndpointsInProject(existingMappings)
+        return endpointsConfigurationFacade.computeFileOperationsMap(missingEndpoints, endpointsGenerator::parsePathAndFilename)
+    }
+
+    private fun computeModelOperationMap(sourceRoot: VirtualFile): Any {
+        val allModels = modelConfigurationFacade.parseModels()
+        return Any()
     }
 
     private fun iterateVirtualFile(virtualFile: VirtualFile, existingMapping: MutableSet<SwaggerMethodDto>) {
@@ -67,7 +95,7 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         VfsUtilCore.iterateChildrenRecursively(virtualFile, {
             true
         }, iterator@{
-            if (!it.isDirectory && it.extension == codegen.getExtension()) {
+            if (!it.isDirectory && it.extension == endpointsGenerator.getExtension()) {
                 addExistingEndpointsToList(it, existingMapping)
             }
             return@iterator true
@@ -78,7 +106,7 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         virtualFile: VirtualFile,
         existingMapping: MutableSet<SwaggerMethodDto>
     ) {
-        existingMapping.addAll(codegen.parseExistingMappings(fileDocumentManager.getDocument(virtualFile)!!.text, true))
+        existingMapping.addAll(endpointsGenerator.parseExistingMappings(fileDocumentManager.getDocument(virtualFile)!!.text, true))
     }
 
 }

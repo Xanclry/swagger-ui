@@ -19,7 +19,7 @@ class GenerateMethodsFacade {
     fun generateCode(psiFile: PsiFile, editor: Editor, project: Project) {
         try {
             val lang: Language = Language.parseJetbrainsLanguage(psiFile.language)
-            val codegen = CodegenFactory.factoryMethod(lang).createCodegen(project)
+            val codegen = CodegenFactory.factoryMethod(lang).createEndpointsGenerator(project)
 
             val codegenCheckResult = codegen.isController(editor.document)
 

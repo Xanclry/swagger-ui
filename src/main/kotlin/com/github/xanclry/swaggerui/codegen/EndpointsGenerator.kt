@@ -1,5 +1,6 @@
 package com.github.xanclry.swaggerui.codegen
 
+import com.github.xanclry.swaggerui.model.ControllerFileMetadata
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
@@ -10,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import kotlin.reflect.KFunction1
 
-interface Codegen {
+interface EndpointsGenerator {
 
     fun runChecks(code: String, vararg functions: KFunction1<String, String?>): ControllerFileMetadata {
         val result = ControllerFileMetadata(true, null)

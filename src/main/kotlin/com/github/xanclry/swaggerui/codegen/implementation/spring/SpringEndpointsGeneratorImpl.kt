@@ -1,16 +1,17 @@
 package com.github.xanclry.swaggerui.codegen.implementation.spring
 
-import com.github.xanclry.swaggerui.codegen.Codegen
-import com.github.xanclry.swaggerui.codegen.ControllerFileMetadata
+import com.github.xanclry.swaggerui.codegen.EndpointsGenerator
 import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.exception.FileIsNotControllerException
 import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
+import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringGeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSourceCodeParser
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSyntaxUtil
+import com.github.xanclry.swaggerui.model.ControllerFileMetadata
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
-import com.github.xanclry.swaggerui.services.EndpointsConfigurationFacade
+import com.github.xanclry.swaggerui.services.facade.EndpointsConfigurationFacade
 import com.github.xanclry.swaggerui.util.DocumentUtil
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.lang.Language
@@ -22,7 +23,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
-class SpringCodegenImpl(project: Project) : Codegen {
+class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
 
     private val syntaxUtil = SpringSyntaxUtil()
     private val endpointsConfigurationFacade = EndpointsConfigurationFacade(project)

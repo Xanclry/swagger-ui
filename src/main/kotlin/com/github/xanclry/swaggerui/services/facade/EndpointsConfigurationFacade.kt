@@ -1,8 +1,9 @@
-package com.github.xanclry.swaggerui.services
+package com.github.xanclry.swaggerui.services.facade
 
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
+import com.github.xanclry.swaggerui.services.ConfigurationService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import io.swagger.models.HttpMethod

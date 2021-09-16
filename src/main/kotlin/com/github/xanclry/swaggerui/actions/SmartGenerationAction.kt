@@ -30,10 +30,11 @@ class SmartGenerationAction : AnAction() {
         dialog.show()
 
         val exitCode = dialog.exitCode
-        if (DialogWrapper.OK_EXIT_CODE == exitCode && dialog.selectedModule != null && dialog.selectedLanguage != null) {
-            val (_, id) = dialog.selectedModule!!
-            val lang = dialog.selectedLanguage!!
-            SmartGenerationFacade(lang, project).runSmartGeneration(modules[id])
+        if (DialogWrapper.OK_EXIT_CODE == exitCode && dialog.selectedWebModule != null && dialog.selectedModelModule != null) {
+            val (_, webModuleId) = dialog.selectedWebModule!!
+            val (_, modelModuleId) = dialog.selectedModelModule!!
+            val lang = dialog.selectedLanguage
+            SmartGenerationFacade(lang, project).runSmartGeneration(modules[webModuleId], modules[modelModuleId])
         }
     }
 }

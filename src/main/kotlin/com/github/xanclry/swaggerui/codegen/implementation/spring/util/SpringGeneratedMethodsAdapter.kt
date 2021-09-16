@@ -1,4 +1,4 @@
-package com.github.xanclry.swaggerui.codegen.implementation.spring
+package com.github.xanclry.swaggerui.codegen.implementation.spring.util
 
 import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
 import com.intellij.openapi.project.Project

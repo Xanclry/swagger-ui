@@ -16,5 +16,8 @@ abstract class CodegenFactory {
         }
     }
 
-    abstract fun createCodegen(project: Project): Codegen
+    abstract fun createEndpointsGenerator(project: Project): EndpointsGenerator
+
+    abstract fun createModelGenerator(project: Project): ModelGenerator
+
 }

@@ -8,7 +8,8 @@ import javax.swing.JComponent
 
 class SmartGenerationDialogWrapper(private val moduleList: List<ModuleDto>) : DialogWrapper(true) {
 
-    var selectedModule: ModuleDto? = null
+    var selectedWebModule: ModuleDto? = null
+    var selectedModelModule: ModuleDto? = null
     var selectedLanguage: Language = Language.SPRING
 
     init {
@@ -18,7 +19,10 @@ class SmartGenerationDialogWrapper(private val moduleList: List<ModuleDto>) : Di
     override fun createCenterPanel(): JComponent {
         return panel {
             row("Select module for generation: ") {
-                comboBox(DefaultComboBoxModel(moduleList.toTypedArray()), { selectedModule }, { selectedModule = it })
+                comboBox(DefaultComboBoxModel(moduleList.toTypedArray()), { selectedWebModule }, { selectedWebModule = it })
+            }
+            row("Select module with models: ") {
+                comboBox(DefaultComboBoxModel(moduleList.toTypedArray()), { selectedModelModule }, { selectedModelModule = it })
             }
             row("Language: ") {
                 comboBox(DefaultComboBoxModel(Language.values()), { selectedLanguage }, { selectedLanguage = it ?: Language.SPRING })

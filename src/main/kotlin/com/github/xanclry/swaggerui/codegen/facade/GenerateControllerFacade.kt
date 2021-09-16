@@ -59,7 +59,7 @@ class GenerateControllerFacade {
     ): Document? {
         var newPsiFile: PsiFile? = null
         try {
-            val codegen = CodegenFactory.factoryMethod(generateControllerDto.language).createCodegen(project)
+            val codegen = CodegenFactory.factoryMethod(generateControllerDto.language).createEndpointsGenerator(project)
             var document: Document? = null
             var code = ""
             if (!generateControllerDto.generateEmpty) {
