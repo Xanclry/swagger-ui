@@ -6,7 +6,7 @@ import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.ApiResponse
 
-class SpringSyntaxUtil {
+class SpringEndpointsSyntaxUtil {
 
     fun generateEndpointCode(operationWithMethodDto: OperationWithMethodDto, controllerPath: String): String {
         val pathForEndpoint = operationWithMethodDto.path.removePrefix(controllerPath)

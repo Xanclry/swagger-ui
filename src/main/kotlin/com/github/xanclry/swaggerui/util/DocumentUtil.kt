@@ -1,6 +1,5 @@
 package com.github.xanclry.swaggerui.util
 
-import com.github.xanclry.swaggerui.model.file.FileMetadataDto
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -53,15 +52,6 @@ class DocumentUtil {
             }
         }
         return currentPackage
-    }
-
-    fun createOrFindFile(project: Project, scope: VirtualFile, fileMetadata: FileMetadataDto): VirtualFile {
-        val targetDirectory: VirtualFile = createOrFindDirectory(project, scope, fileMetadata.packagePath)
-        var file: VirtualFile? = findFileInDirectory(targetDirectory, fileMetadata.filename)
-        if (file == null) {
-            file = createFileInDirectory(targetDirectory, fileMetadata.filename)
-        }
-        return file
     }
 
     fun loadText(virtualFile: VirtualFile): String {

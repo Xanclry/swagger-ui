@@ -4,9 +4,9 @@ import com.github.xanclry.swaggerui.codegen.EndpointsGenerator
 import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.exception.FileIsNotControllerException
 import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
+import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringEndpointsSyntaxUtil
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringGeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSourceCodeParser
-import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSyntaxUtil
 import com.github.xanclry.swaggerui.model.ControllerFileMetadata
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
 class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
 
-    private val syntaxUtil = SpringSyntaxUtil()
+    private val syntaxUtil = SpringEndpointsSyntaxUtil()
     private val endpointsConfigurationFacade = EndpointsConfigurationFacade(project)
     private val language = Language.findLanguageByID("JAVA")!!
     private val codeParser = SpringSourceCodeParser()
@@ -59,7 +59,7 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         operations: List<OperationWithMethodDto>
     ): PsiFile {
         val directory = documentUtil.createOrFindDirectory(project, scope, fileMetadataDto.packagePath)
-        val controllerFile = directory.findChild(fileMetadataDto.filename)
+        val controllerFile = documentUtil.findFileInDirectory(directory, fileMetadataDto.filename)
         controllerFile?.refresh(false, false)
         return if (controllerFile != null) {
             validateControllerAndAddMethods(controllerFile, controllerPath, operations, project)

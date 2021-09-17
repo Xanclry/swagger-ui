@@ -9,6 +9,7 @@ import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
 import com.github.xanclry.swaggerui.services.facade.EndpointsConfigurationFacade
 import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
+import com.github.xanclry.swaggerui.util.DocumentUtil
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.command.WriteCommandAction
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import io.swagger.v3.oas.models.media.Schema
 
 class SmartGenerationFacade(language: Language, private val project: Project) {
 
@@ -26,6 +28,7 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
     private val fileDocumentManager = FileDocumentManager.getInstance()
     private val endpointsConfigurationFacade = EndpointsConfigurationFacade(project)
     private val modelConfigurationFacade = ModelConfigurationFacade(project)
+    private val documentUtil = DocumentUtil()
 
     fun runSmartGeneration(webModule: Module, modelModule: Module) {
         val webSourceRoots: Array<VirtualFile> = ModuleRootManager.getInstance(webModule).sourceRoots
@@ -86,7 +89,23 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
     }
 
     private fun computeModelOperationMap(sourceRoot: VirtualFile): Any {
-        val allModels = modelConfigurationFacade.parseModels()
+        val allModels: MutableMap<String, Schema<Any>>? = modelConfigurationFacade.parseModels()
+        if (allModels != null) {
+            val filteredModels = modelGenerator.filterModels(allModels)
+            filteredModels.entries.forEach {
+                val packagePath = it.value.description
+                val directory = documentUtil.createOrFindDirectory(project, sourceRoot, packagePath)
+                val filename = modelGenerator.getFilenameFromModelName(it.key)
+                val modelFile = documentUtil.findFileInDirectory(directory, filename)
+                if (modelFile == null) {
+                    val modelFileContent = modelGenerator.generateModelCode(it.key, filteredModels)
+                    val newPsiModelFile = modelGenerator.generateModelPsiFile(project, filename, modelFileContent)
+                } else {
+
+                }
+                println()
+            }
+        }
         return Any()
     }
 
