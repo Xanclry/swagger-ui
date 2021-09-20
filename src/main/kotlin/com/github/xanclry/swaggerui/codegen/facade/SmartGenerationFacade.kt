@@ -7,6 +7,7 @@ import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
+import com.github.xanclry.swaggerui.model.file.PsiFileWithDirectory
 import com.github.xanclry.swaggerui.services.facade.EndpointsConfigurationFacade
 import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
 import com.github.xanclry.swaggerui.util.DocumentUtil
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import io.swagger.v3.oas.models.media.Schema
 
 class SmartGenerationFacade(language: Language, private val project: Project) {
@@ -32,13 +34,13 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
 
     fun runSmartGeneration(webModule: Module, modelModule: Module) {
         val webSourceRoots: Array<VirtualFile> = ModuleRootManager.getInstance(webModule).sourceRoots
-        val modelSourceRoots: Array<VirtualFile> = ModuleRootManager.getInstance(webModule).sourceRoots
+        val modelSourceRoots: Array<VirtualFile> = ModuleRootManager.getInstance(modelModule).sourceRoots
         var editedFilesCounter = 0
         try {
             val webSourceRoot = filterSourceRoots(webSourceRoots)
             val modelSourceRoot = filterSourceRoots(modelSourceRoots)
             val fileOperationsMap = computeEndpointsOperationMap(webSourceRoot)
-            val modelOperations = computeModelOperationMap(modelSourceRoot)
+            val modelOperations = computeModelFilesList(modelSourceRoot)
 
             WriteCommandAction.runWriteCommandAction(project) {
                 fileOperationsMap.forEach { (fileMetadata, operationList) ->
@@ -51,6 +53,11 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
                         controllerPath,
                         operationList
                     )
+                    editedFilesCounter++
+                }
+                modelOperations.forEach { model ->
+                    endpointsGenerator.reformatAndOptimizeImports(model.psiFile, project)
+                    documentUtil.createFileInDirectory(project, model.psiFile, model.directory)
                     editedFilesCounter++
                 }
             }
@@ -88,25 +95,33 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         return endpointsConfigurationFacade.computeFileOperationsMap(missingEndpoints, endpointsGenerator::parsePathAndFilename)
     }
 
-    private fun computeModelOperationMap(sourceRoot: VirtualFile): Any {
+    private fun computeModelFilesList(sourceRoot: VirtualFile): List<PsiFileWithDirectory> {
         val allModels: MutableMap<String, Schema<Any>>? = modelConfigurationFacade.parseModels()
+        val psiFileWithDirectoryList: MutableList<PsiFileWithDirectory> = ArrayList()
         if (allModels != null) {
             val filteredModels = modelGenerator.filterModels(allModels)
             filteredModels.entries.forEach {
-                val packagePath = it.value.description
-                val directory = documentUtil.createOrFindDirectory(project, sourceRoot, packagePath)
-                val filename = modelGenerator.getFilenameFromModelName(it.key)
-                val modelFile = documentUtil.findFileInDirectory(directory, filename)
-                if (modelFile == null) {
-                    val modelFileContent = modelGenerator.generateModelCode(it.key, filteredModels)
-                    val newPsiModelFile = modelGenerator.generateModelPsiFile(project, filename, modelFileContent)
-                } else {
-
-                }
-                println()
+                handleModelDescription(it, sourceRoot, filteredModels, psiFileWithDirectoryList)
             }
         }
-        return Any()
+        return psiFileWithDirectoryList
+    }
+
+    private fun handleModelDescription(
+        entry: Map.Entry<String, Schema<Any>>,
+        sourceRoot: VirtualFile,
+        filteredModels: Map<String, Schema<Any>>,
+        psiFileWithDirectoryList: MutableList<PsiFileWithDirectory>
+    ) {
+        val packagePath = entry.value.description
+        val directory = documentUtil.createOrFindDirectory(project, sourceRoot, packagePath)
+        val filename = modelGenerator.getFilenameFromModelName(entry.key)
+        val modelFile = documentUtil.findFileInDirectory(directory, filename)
+        if (modelFile == null) {
+            val modelFileContent = modelGenerator.generateModelCode(entry.key, filteredModels)
+            val newPsiModelFile: PsiFile = modelGenerator.generateModelPsiFile(project, filename, modelFileContent)
+            psiFileWithDirectoryList.add(PsiFileWithDirectory(newPsiModelFile, directory))
+        }
     }
 
     private fun iterateVirtualFile(virtualFile: VirtualFile, existingMapping: MutableSet<SwaggerMethodDto>) {

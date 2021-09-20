@@ -8,6 +8,8 @@ import io.swagger.v3.oas.models.responses.ApiResponse
 
 class SpringEndpointsSyntaxUtil {
 
+    private val typesUtil = SpringTypesUtil()
+
     fun generateEndpointCode(operationWithMethodDto: OperationWithMethodDto, controllerPath: String): String {
         val pathForEndpoint = operationWithMethodDto.path.removePrefix(controllerPath)
         val bindAnnotationCode = generateBindAnnotationCode(operationWithMethodDto.method, pathForEndpoint)
@@ -66,45 +68,14 @@ class SpringEndpointsSyntaxUtil {
                 parameter
             )
         } ${
-            getParameterType(
-                parameter.schema.type,
-                parameter.schema.format,
-                parameter
+            typesUtil.getParameterType(
+                parameter.schema
             )
         } ${getParameterName(parameter)}"""
     }
 
     private fun getParameterName(parameter: Parameter): String {
         return parameter.name
-    }
-
-    private fun getParameterType(type: String, format: String?, parameter: Parameter): String {
-        when (type) {
-            "integer" -> {
-                if (format == "int64") {
-                    return "Long"
-                }
-                return "Integer"
-            }
-            "number" -> {
-                if (format == "float") {
-                    return "Float"
-                }
-                return "Double"
-            }
-            "boolean" -> return "Boolean"
-            "string" -> {
-                if (parameter.schema.enum != null) return "Enum"
-                return when (format) {
-                    "date" -> "java.time.LocalDate"
-                    else -> "String"
-                }
-            }
-            "array" -> {
-                return "java.util.List"
-            }
-        }
-        return "***"
     }
 
     private fun generateMethodReturnType(operation: Operation): String {
