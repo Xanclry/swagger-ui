@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import io.swagger.v3.oas.models.media.Schema
 
-class SpringModelGeneratorImpl(project: Project) : ModelGenerator {
+class SpringModelGeneratorImpl(val project: Project) : ModelGenerator {
 
     private val modelSyntaxUtil = SpringModelSyntaxUtil()
 
@@ -26,13 +26,13 @@ class SpringModelGeneratorImpl(project: Project) : ModelGenerator {
         return ".java"
     }
 
-    override fun generateModelPsiFile(project: Project, filename: String, code: String): PsiFile {
+    override fun generateModelPsiFile(filename: String, code: String): PsiFile {
         return PsiFileFactory.getInstance(project)
             .createFileFromText(filename, language, code)
     }
 
-    override fun generateModelCode(modelName: String, models: Map<String, Schema<Any>>): String {
-        return modelSyntaxUtil.generateModelCode(modelName, models)
+    override fun generateModelCode(modelName: String, packagePath: String, models: Map<String, Schema<Any>>): String {
+        return modelSyntaxUtil.generateModelCode(modelName, packagePath, models)
     }
 
 }

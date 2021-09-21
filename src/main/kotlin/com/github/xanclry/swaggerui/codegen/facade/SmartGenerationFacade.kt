@@ -117,8 +117,8 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         val filename = modelGenerator.getFilenameFromModelName(entry.key)
         val modelFile = documentUtil.findFileInDirectory(directory, filename)
         return if (modelFile == null) {
-            val modelFileContent = modelGenerator.generateModelCode(entry.key, filteredModels)
-            val newPsiModelFile: PsiFile = modelGenerator.generateModelPsiFile(project, filename, modelFileContent)
+            val modelFileContent = modelGenerator.generateModelCode(entry.key, packagePath, filteredModels)
+            val newPsiModelFile: PsiFile = modelGenerator.generateModelPsiFile(filename, modelFileContent)
             PsiFileWithDirectory(newPsiModelFile, directory)
         } else {
             null

@@ -6,12 +6,13 @@ class SpringModelSyntaxUtil {
 
     private val typesUtil = SpringTypesUtil()
 
-    fun generateModelCode(modelName: String, models: Map<String, Schema<Any>>): String {
+    fun generateModelCode(modelName: String, packagePath: String, models: Map<String, Schema<Any>>): String {
         val currentSchema: Schema<Any>? = models[modelName]
         val properties: MutableMap<String, Schema<Any>>? = currentSchema?.properties
         return """
             @lombok.Data
             @lombok.NoArgsConstructor
+            @io.swagger.annotations.ApiModel(description = "$packagePath")
             public class $modelName {
             ${
             properties?.entries?.stream()
