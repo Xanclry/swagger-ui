@@ -43,6 +43,11 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
             val modelOperations = computeModelFilesList(modelSourceRoot)
 
             WriteCommandAction.runWriteCommandAction(project) {
+                modelOperations.forEach { model ->
+                    endpointsGenerator.reformatAndOptimizeImports(model.psiFile, project)
+                    documentUtil.createFileInDirectory(project, model.psiFile, model.directory)
+                    editedFilesCounter++
+                }
                 fileOperationsMap.forEach { (fileMetadata, operationList) ->
                     val controllerPath =
                         endpointsConfigurationFacade.findEndpointsCommonPrefix(operationList.map { it.path })
@@ -53,11 +58,6 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
                         controllerPath,
                         operationList
                     )
-                    editedFilesCounter++
-                }
-                modelOperations.forEach { model ->
-                    endpointsGenerator.reformatAndOptimizeImports(model.psiFile, project)
-                    documentUtil.createFileInDirectory(project, model.psiFile, model.directory)
                     editedFilesCounter++
                 }
             }
