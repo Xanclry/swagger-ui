@@ -61,10 +61,6 @@ class SpringTypesUtil {
         return typeName
     }
 
-    private fun generateFullTypeName(packagePath: String, className: String): String {
-        return "${packagePath}.${className}"
-    }
-
     private fun resolveReferenceType(referenceLink: String?, models: Map<String, Schema<Any>>?): String? {
         if (models == null || referenceLink == null) return null
         val objectType = referenceLink.substringAfterLast("/")
@@ -82,6 +78,12 @@ class SpringTypesUtil {
             rawTemplateType
         } else {
             rawTemplateType.plus("<").plus(diamondType).plus(">")
+        }
+    }
+
+    companion object {
+        fun generateFullTypeName(packagePath: String, className: String): String {
+            return "${packagePath}.${className}"
         }
     }
 }

@@ -7,6 +7,7 @@ import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringEndpointsSyntaxUtil
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringGeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSourceCodeParser
+import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringTypesUtil
 import com.github.xanclry.swaggerui.model.ControllerFileMetadata
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
@@ -80,7 +81,7 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
     ): PsiFile {
         val content = generateMethods(operations, controllerPath, project, models)
         val generatedController: PsiFile =
-            generateController(controllerPath, project, code = content.asString(), filename = fileMetadataDto.filename)
+            generateController(controllerPath, project, code = content.asString(), fileMetadata = fileMetadataDto)
         documentUtil.createFileInDirectory(project, generatedController, directory)
         return generatedController
     }
@@ -166,15 +167,34 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         return codeParser.getControllerPath(existingCode)
     }
 
-    override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String, models: Map<String, Schema<Any>>): GeneratedMethodsAdapter {
+    override fun generateEndpointsCodePathUnknown(
+        project: Project,
+        existingCode: String,
+        models: Map<String, Schema<Any>>
+    ): GeneratedMethodsAdapter {
         val controllerPath = parseControllerPath(existingCode)
         return generateEndpointsCodeWithPath(project, existingCode, controllerPath, models)
     }
 
-    private fun generateControllerCode(path: String, classname: String, code: String = ""): String {
+    private fun generateControllerCode(
+        path: String,
+        fileMetadata: FileMetadataDto?,
+        classname: String,
+        code: String = ""
+    ): String {
+        val apiAnnotation = if (fileMetadata != null) {
+            val fullPath = SpringTypesUtil.generateFullTypeName(
+                fileMetadata.packagePath,
+                classname
+            )
+            "@io.swagger.annotations.Api(tags = \"$fullPath\")"
+        } else {
+            ""
+        }
         return """
             |@org.springframework.web.bind.annotation.RestController
             |@org.springframework.web.bind.annotation.RequestMapping("$path")
+            |$apiAnnotation
             |public class $classname {$code}
         """.trimMargin()
     }
@@ -184,10 +204,10 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         project: Project,
         shouldOptimizeCode: Boolean,
         code: String,
-        filename: String?
+        fileMetadata: FileMetadataDto?
     ): PsiFile {
         val newPsiFile =
-            createPsiFileWithController(project, path, code, filename)
+            createPsiFileWithController(project, path, code, fileMetadata)
         if (shouldOptimizeCode) reformatAndOptimizeImports(newPsiFile, project)
         return newPsiFile
     }
@@ -196,12 +216,12 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         project: Project,
         path: String,
         code: String,
-        filename: String? = null
+        fileMetadata: FileMetadataDto? = null
     ): PsiFile {
-        val newFilename = filename ?: generateFilename(path)
+        val newFilename = fileMetadata?.filename ?: generateFilename(path)
         val classname = newFilename.replace(".".plus(getExtension()), "")
         return PsiFileFactory.getInstance(project)
-            .createFileFromText(newFilename, language, generateControllerCode(path, classname, code))
+            .createFileFromText(newFilename, language, generateControllerCode(path, fileMetadata, classname, code))
     }
 
 

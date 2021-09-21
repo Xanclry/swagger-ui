@@ -40,7 +40,7 @@ interface EndpointsGenerator {
         project: Project,
         shouldOptimizeCode: Boolean = true,
         code: String = "",
-        filename: String? = null
+        fileMetadata: FileMetadataDto? = null
     ): PsiFile
 
     fun createOrFindControllerAndGenerateMethods(
