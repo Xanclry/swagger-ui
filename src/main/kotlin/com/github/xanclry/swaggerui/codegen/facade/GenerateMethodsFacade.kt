@@ -5,6 +5,7 @@ import com.github.xanclry.swaggerui.codegen.CodegenFactory
 import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.Language
 import com.github.xanclry.swaggerui.codegen.exception.LanguageNotSupportedException
+import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
 import com.github.xanclry.swaggerui.util.Notifier
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.command.WriteCommandAction
@@ -15,13 +16,18 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 
-class GenerateMethodsFacade {
+class GenerateMethodsFacade(language: Language, project: Project) {
+
+    private val modelGenerator = CodegenFactory.factoryMethod(language).createModelGenerator(project)
+    private val modelConfigurationFacade = ModelConfigurationFacade(project)
+
     fun generateCode(psiFile: PsiFile, editor: Editor, project: Project) {
         try {
             val lang: Language = Language.parseJetbrainsLanguage(psiFile.language)
             val codegen = CodegenFactory.factoryMethod(lang).createEndpointsGenerator(project)
 
             val codegenCheckResult = codegen.isController(editor.document)
+            val filteredModelsMap = modelConfigurationFacade.getFilteredModelsFromConfig(modelGenerator)
 
             if (codegenCheckResult.isController) {
 
@@ -32,7 +38,7 @@ class GenerateMethodsFacade {
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = false
                             indicator.text = MyBundle.message("modal.generating.methods.message")
-                            psiMethods = codegen.generateEndpointsCodePathUnknown(project, editor.document.text)
+                            psiMethods = codegen.generateEndpointsCodePathUnknown(project, editor.document.text, filteredModelsMap)
                         }
                     })
                 WriteCommandAction.runWriteCommandAction(project) {

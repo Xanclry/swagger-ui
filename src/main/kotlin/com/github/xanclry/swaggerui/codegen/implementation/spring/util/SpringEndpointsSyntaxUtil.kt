@@ -3,6 +3,7 @@ package com.github.xanclry.swaggerui.codegen.implementation.spring.util
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import io.swagger.models.HttpMethod
 import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
 import io.swagger.v3.oas.models.responses.ApiResponse
 
@@ -10,17 +11,23 @@ class SpringEndpointsSyntaxUtil {
 
     private val typesUtil = SpringTypesUtil()
 
-    fun generateEndpointCode(operationWithMethodDto: OperationWithMethodDto, controllerPath: String): String {
+    fun generateEndpointCode(
+        operationWithMethodDto: OperationWithMethodDto,
+        controllerPath: String,
+        models: Map<String, Schema<Any>>
+    ): String {
         val pathForEndpoint = operationWithMethodDto.path.removePrefix(controllerPath)
+
+        // @Get/Post/etc. Mapping
         val bindAnnotationCode = generateBindAnnotationCode(operationWithMethodDto.method, pathForEndpoint)
         val apiOperationCode = generateApiOperationCode(operationWithMethodDto.operation)
         val apiResponsesCode = generateApiResponsesCode(operationWithMethodDto.operation)
-        val methodCode = generateMethodCode(operationWithMethodDto)
+        val methodCode = generateMethodCode(operationWithMethodDto, models)
         return "$bindAnnotationCode\n$apiOperationCode\n$apiResponsesCode\n$methodCode"
     }
 
-    private fun generateMethodCode(operationWithMethodDto: OperationWithMethodDto): String {
-        val returnType = generateMethodReturnType(operationWithMethodDto.operation)
+    private fun generateMethodCode(operationWithMethodDto: OperationWithMethodDto, models: Map<String, Schema<Any>>): String {
+        val returnType = generateMethodReturnType(operationWithMethodDto.operation, models)
         val parametersString = generateMethodParameters(operationWithMethodDto.operation)
         val methodName = generateMethodName(operationWithMethodDto)
         val returnTypeInMethod = if (returnType == "void") "" else "null"
@@ -78,11 +85,12 @@ class SpringEndpointsSyntaxUtil {
         return parameter.name
     }
 
-    private fun generateMethodReturnType(operation: Operation): String {
+    private fun generateMethodReturnType(operation: Operation, models: Map<String, Schema<Any>>): String {
         val ref: String? = operation.responses["200"]?.content?.get("*/*")?.schema?.`$ref`
         return if (ref != null) {
             val returnTypeWithQuotes = ref.replaceBeforeLast("/", "").replaceRange(0, 1, "")
-            returnTypeWithQuotes.replace("»", ">").replace("«", "<")
+
+            typesUtil.generateTypeWithFullNames(returnTypeWithQuotes, models)
         } else {
             "void"
         }

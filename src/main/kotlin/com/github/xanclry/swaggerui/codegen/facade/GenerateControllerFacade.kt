@@ -4,6 +4,7 @@ import com.github.xanclry.swaggerui.MyBundle
 import com.github.xanclry.swaggerui.codegen.CodegenFactory
 import com.github.xanclry.swaggerui.codegen.exception.LanguageNotSupportedException
 import com.github.xanclry.swaggerui.dialog.controller.GenerateControllerDto
+import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
 import com.github.xanclry.swaggerui.util.DocumentUtil
 import com.github.xanclry.swaggerui.util.DocumentUtil.Companion.openEditorOnNewFile
 import com.github.xanclry.swaggerui.util.Notifier
@@ -55,18 +56,24 @@ class GenerateControllerFacade {
     private fun generateDocument(
         virtualDirectory: VirtualFile,
         project: Project,
-        generateControllerDto: GenerateControllerDto
+        generateControllerDto: GenerateControllerDto,
     ): Document? {
         var newPsiFile: PsiFile? = null
         try {
-            val codegen = CodegenFactory.factoryMethod(generateControllerDto.language).createEndpointsGenerator(project)
+            val endpointsGenerator = CodegenFactory.factoryMethod(generateControllerDto.language).createEndpointsGenerator(project)
+            val modelGenerator =
+                CodegenFactory.factoryMethod(generateControllerDto.language).createModelGenerator(project)
+            val modelConfigurationFacade = ModelConfigurationFacade(project)
+            val filteredModelsMap = modelConfigurationFacade.getFilteredModelsFromConfig(modelGenerator)
+
             var document: Document? = null
             var code = ""
             if (!generateControllerDto.generateEmpty) {
-                code = codegen.generateEndpointsCodeWithPath(project, code, generateControllerDto.path).asString()
+                code =
+                    endpointsGenerator.generateEndpointsCodeWithPath(project, code, generateControllerDto.path, filteredModelsMap).asString()
             }
             WriteCommandAction.runWriteCommandAction(project) {
-                newPsiFile = codegen.generateController(generateControllerDto.path, project, true, code)
+                newPsiFile = endpointsGenerator.generateController(generateControllerDto.path, project, true, code)
                 document = documentUtil.createFileInDirectory(project, newPsiFile!!, virtualDirectory)
             }
             return document

@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import io.swagger.v3.oas.models.media.Schema
 import kotlin.reflect.KFunction1
 
 interface EndpointsGenerator {
@@ -47,17 +48,19 @@ interface EndpointsGenerator {
         scope: VirtualFile,
         fileMetadataDto: FileMetadataDto,
         controllerPath: String,
-        operations: List<OperationWithMethodDto>
+        operations: List<OperationWithMethodDto>,
+        models: Map<String, Schema<Any>>
     ): PsiFile
 
     fun addMethodsToPsiFile(psiMethods: GeneratedMethodsAdapter?, psiFile: PsiFile, project: Project)
-    fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): GeneratedMethodsAdapter
-    fun generateEndpointsCodeWithPath(project: Project, existingCode: String, path: String): GeneratedMethodsAdapter
+    fun generateEndpointsCodePathUnknown(project: Project, existingCode: String, models: Map<String, Schema<Any>>): GeneratedMethodsAdapter
+    fun generateEndpointsCodeWithPath(project: Project, existingCode: String, path: String, models: Map<String, Schema<Any>>): GeneratedMethodsAdapter
     fun reformatAndOptimizeImports(psiElement: PsiElement, project: Project)
     fun getExtension(): String
     fun generateMethods(
         endpointsToCreate: List<OperationWithMethodDto>,
         controllerPath: String,
-        project: Project
+        project: Project,
+        models: Map<String, Schema<Any>>
     ): GeneratedMethodsAdapter
 }

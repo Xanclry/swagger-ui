@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import io.swagger.v3.oas.models.media.Schema
 
 class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
 
@@ -56,15 +57,16 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         scope: VirtualFile,
         fileMetadataDto: FileMetadataDto,
         controllerPath: String,
-        operations: List<OperationWithMethodDto>
+        operations: List<OperationWithMethodDto>,
+        models: Map<String, Schema<Any>>
     ): PsiFile {
         val directory = documentUtil.createOrFindDirectory(project, scope, fileMetadataDto.packagePath)
         val controllerFile = documentUtil.findFileInDirectory(directory, fileMetadataDto.filename)
         controllerFile?.refresh(false, false)
         return if (controllerFile != null) {
-            validateControllerAndAddMethods(controllerFile, controllerPath, operations, project)
+            validateControllerAndAddMethods(controllerFile, controllerPath, operations, project, models)
         } else {
-            generateMethodsAndController(operations, controllerPath, project, fileMetadataDto, directory)
+            generateMethodsAndController(operations, controllerPath, project, fileMetadataDto, directory, models)
         }
     }
 
@@ -73,9 +75,10 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         controllerPath: String,
         project: Project,
         fileMetadataDto: FileMetadataDto,
-        directory: VirtualFile
+        directory: VirtualFile,
+        models: Map<String, Schema<Any>>,
     ): PsiFile {
-        val content = generateMethods(operations, controllerPath, project)
+        val content = generateMethods(operations, controllerPath, project, models)
         val generatedController: PsiFile =
             generateController(controllerPath, project, code = content.asString(), filename = fileMetadataDto.filename)
         documentUtil.createFileInDirectory(project, generatedController, directory)
@@ -86,13 +89,14 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         controllerFile: VirtualFile,
         controllerPath: String,
         operations: List<OperationWithMethodDto>,
-        project: Project
+        project: Project,
+        models: Map<String, Schema<Any>>
     ): PsiFile {
         val controllerFileContent = documentUtil.loadText(controllerFile)
         if (isController(controllerFileContent).isController) {
             val controllerPathFromFile = parseControllerPath((controllerFileContent))
             if (controllerPath.startsWith(controllerPathFromFile)) {
-                val content = generateMethods(operations, controllerPathFromFile, project)
+                val content = generateMethods(operations, controllerPathFromFile, project, models)
                 val foundControllerFile: PsiFile = PsiManager.getInstance(project).findFile(controllerFile)!!
                 addMethodsToPsiFile(content, foundControllerFile, project)
                 return foundControllerFile
@@ -115,11 +119,12 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
     override fun generateMethods(
         endpointsToCreate: List<OperationWithMethodDto>,
         controllerPath: String,
-        project: Project
+        project: Project,
+        models: Map<String, Schema<Any>>
     ): GeneratedMethodsAdapter {
         val accumulator = ArrayList<String>()
         endpointsToCreate.forEach { endpoint ->
-            accumulator += syntaxUtil.generateEndpointCode(endpoint, controllerPath).plus("\n\n")
+            accumulator += syntaxUtil.generateEndpointCode(endpoint, controllerPath, models).plus("\n\n")
         }
         return SpringGeneratedMethodsAdapter(accumulator, project)
     }
@@ -127,14 +132,15 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
     override fun generateEndpointsCodeWithPath(
         project: Project,
         existingCode: String,
-        path: String
+        path: String,
+        models: Map<String, Schema<Any>>
     ): GeneratedMethodsAdapter {
         try {
             val existingMappings: List<SwaggerMethodDto> = parseExistingMappings(existingCode, false)
             val endpointsToCreate: List<OperationWithMethodDto> =
                 endpointsConfigurationFacade.identifyMissingEndpoints(path, existingMappings)
 
-            return generateMethods(endpointsToCreate, path, project)
+            return generateMethods(endpointsToCreate, path, project, models)
         } catch (e: IllegalArgumentException) {
             Notifier.notifyProjectWithMessageFromBundle(
                 project,
@@ -160,9 +166,9 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
         return codeParser.getControllerPath(existingCode)
     }
 
-    override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String): GeneratedMethodsAdapter {
+    override fun generateEndpointsCodePathUnknown(project: Project, existingCode: String, models: Map<String, Schema<Any>>): GeneratedMethodsAdapter {
         val controllerPath = parseControllerPath(existingCode)
-        return generateEndpointsCodeWithPath(project, existingCode, controllerPath)
+        return generateEndpointsCodeWithPath(project, existingCode, controllerPath, models)
     }
 
     private fun generateControllerCode(path: String, classname: String, code: String = ""): String {
