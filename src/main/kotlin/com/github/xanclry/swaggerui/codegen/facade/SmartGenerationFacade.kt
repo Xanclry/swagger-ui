@@ -72,17 +72,21 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
                 "notification.codegen.smart.error.fileIsNotController",
                 NotificationType.ERROR
             )
+        } catch (e: IllegalArgumentException) {
+            Notifier.notifyProjectWithMessageFromBundle(project, "notification.config.error.wrongUrl", NotificationType.ERROR)
         } catch (e: PathDontMatchException) {
             Notifier.notifyProject(project, e.message!!, NotificationType.ERROR)
         } catch (e: Exception) {
             Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)
         } finally {
-            Notifier.notifyProjectWithContentAfterBundleMessage(
-                project,
-                editedFilesCounter.toString(),
-                "notification.codegen.smart.success.filesAffected",
-                NotificationType.INFORMATION
-            )
+            if (editedFilesCounter > 0) {
+                Notifier.notifyProjectWithContentAfterBundleMessage(
+                    project,
+                    editedFilesCounter.toString(),
+                    "notification.codegen.smart.success.filesAffected",
+                    NotificationType.INFORMATION
+                )
+            }
         }
     }
 
@@ -101,7 +105,10 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         )
     }
 
-    private fun computeListOfModelPsiFiles(sourceRoot: VirtualFile, models: Map<String, Schema<Any>>): List<PsiFileWithDirectory> {
+    private fun computeListOfModelPsiFiles(
+        sourceRoot: VirtualFile,
+        models: Map<String, Schema<Any>>
+    ): List<PsiFileWithDirectory> {
         return models.entries.mapNotNull {
             handleModelDescription(it, sourceRoot, models)
         }
