@@ -25,7 +25,15 @@ class SpringModelSyntaxUtil {
 
     private fun generateFieldCode(entry: Map.Entry<String, Schema<Any>>, models: Map<String, Schema<Any>>): String {
         val parameterType = typesUtil.getParameterType(entry.value, models)
-        val name = entry.key
+        val name = generateFieldName(parameterType, entry.key)
         return "private $parameterType $name;"
     }
+
+    private fun generateFieldName(type: String, nameFromConfig: String): String {
+        return when (type) {
+            "Boolean", "boolean" -> typesUtil.generateBooleanFieldNameWithIs(nameFromConfig)
+            else -> nameFromConfig
+        }
+    }
+
 }

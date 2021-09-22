@@ -61,6 +61,14 @@ class SpringTypesUtil {
         return typeName
     }
 
+    fun generateBooleanFieldNameWithIs(originalName: String): String {
+        return if (!originalName.startsWith("is")) {
+            "is" + originalName[0].toUpperCase() + originalName.substring(1)
+        } else {
+            originalName
+        }
+    }
+
     private fun resolveReferenceType(referenceLink: String?, models: Map<String, Schema<Any>>?): String? {
         if (models == null || referenceLink == null) return null
         val objectType = referenceLink.substringAfterLast("/")
@@ -80,6 +88,8 @@ class SpringTypesUtil {
             rawTemplateType.plus("<").plus(diamondType).plus(">")
         }
     }
+
+
 
     companion object {
         fun generateFullTypeName(packagePath: String, className: String): String {
