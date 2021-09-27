@@ -1,18 +1,16 @@
 package com.github.xanclry.swaggerui.util
 
 import com.github.xanclry.swaggerui.MyBundle
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 
 class Notifier {
     companion object {
-        private val NOTIFICATION_GROUP =
-            NotificationGroup("Endpoint Load Config Notification", NotificationDisplayType.BALLOON, true)
 
         fun notifyProject(project: Project?, content: String, type: NotificationType) {
-            NOTIFICATION_GROUP.createNotification(content, type).notify(project)
+            Notifications.Bus.notify(Notification("com.github.xanclry.swaggerui.notification", "Endpoint Generation", content, type), project)
         }
 
         fun notifyProjectWithContentBeforeBundleMessage(project: Project?, content: String, key: String, type: NotificationType) {
