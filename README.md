@@ -1,14 +1,14 @@
 # Endpoint UI Codegen
 
 ![Build](https://github.com/Xanclry/swagger-ui/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/17438-endpoint-ui-codegen)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/PLUGIN_ID.svg)](https://plugins.jetbrains.com/plugin/17438-endpoint-ui-codegen)
+[![Version](https://img.shields.io/jetbrains/plugin/v/17438-endpoint-ui-codegen.svg)](https://plugins.jetbrains.com/plugin/17438-endpoint-ui-codegen)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/17438-endpoint-ui-codegen.svg)](https://plugins.jetbrains.com/plugin/17438-endpoint-ui-codegen)
 
 <!-- Plugin description -->
 
 ## Overview
 
-This is Simple Swagger/OpenAPI endpoint generator tool. It allows you to generate missing controller methods or generate
+This is Simple Swagger/OpenAPI endpoint generator tool. It allows you to generate missing <kbd>controller methods</kbd> or generate
 a new controller with a specified path.
 
 Supported languages:
@@ -21,9 +21,11 @@ For the plugin to work correctly, you need to specify the path to your Swagger/O
 
 You can do this in `Settings` > `Tools` > `Endpoint UI Codegen Config`.
 
+<!-- Plugin description end -->
+
 ## Usage
 
-#### Generating missing endpoints
+### Generating missing endpoints
 
 To generate the missing endpoints, open the file with the controller in the editor. Your controller must be annotated *
 @RestController* or *@Controller* and *@RequestMapping*
@@ -31,14 +33,51 @@ with the specified path.
 
 The method is considered present if the code contains the annotation "@*METHOD_NAME* Mapping("/some/path")
 
-#### New controller generation
+### New controller generation
 
 Right-click on the required package, select `New` > `Endpoint UI Codegen` > `Controller`.
 
 In the dialog box that appears, you can specify the path of the controller and whether the controller will be empty. 
 Name of the class will be generated according to the URL.
 
-<!-- Plugin description end -->
+### Smart Generation 
+
+Smart generation allows you to create missing controllers and models based on configuration. 
+In addition, the plugin automatically recognizes packages for generated files.
+Information about package must be stored in the configuration.
+
+For controllers, this is the <kbd>tag name</kbd>:
+
+```
+ "/api/cinema/{id}": {
+      "get": {
+        "tags": [
+          "com.example.your.package.here.CinemaRestController"
+        ],
+        "summary": "getById",
+        ...
+```
+
+And for model, this is the <kbd>description</kbd>: 
+
+```
+"Actor": {
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string"
+    },
+    "isRetired": {
+      "type": "boolean"
+    },
+    "lastName": {
+      "type": "string"
+    }
+  },
+  "title": "Actor",
+  "description": "com.example.your.package.here" 
+},
+```
 
 ## Installation
 
