@@ -25,14 +25,39 @@ class SpringSourceCodeParser {
         if (fullPath) {
             controllerPath = getControllerPath(text)
         }
-        val regex = "@([^R]{3,7})Mapping.*?\"(.+?)\"".toRegex()
-        val searchResult = regex.findAll(text)
-
         val resultList: MutableList<SwaggerMethodDto> = ArrayList()
 
+        val pathSpecifiedRegex = "@([^R]{3,7})Mapping.*?\"(.+?)\"".toRegex()
+        val pathSpecifiedSearchResult = pathSpecifiedRegex.findAll(text)
+
+        handleSearchResult(pathSpecifiedSearchResult, resultList, controllerPath, false)
+
+        val pathNotSpecifiedRegex = "@([^R]{3,7})Mapping(\n|\\Q()\\E\n)".toRegex()
+        val pathNotSpecifiedSearchResult = pathNotSpecifiedRegex.findAll(text)
+
+        handleSearchResult(pathNotSpecifiedSearchResult, resultList, controllerPath, true)
+
+        return resultList
+    }
+
+    private fun getPathFromMatchResult(matchResult: MatchResult, pathIsEmpty: Boolean): String {
+        return if (pathIsEmpty) {
+            ""
+        } else {
+            matchResult.groupValues[2]
+        }
+    }
+
+    private fun handleSearchResult(
+        searchResult: Sequence<MatchResult>,
+        resultList: MutableList<SwaggerMethodDto>,
+        controllerPath: String,
+        pathIsEmpty: Boolean
+    ) {
         searchResult.forEach { matchResult ->
             val method = HttpMethod.valueOf(matchResult.groupValues[1].toUpperCase())
-            val path = matchResult.groupValues[2]
+            val path = getPathFromMatchResult(matchResult, pathIsEmpty)
+            // todo convert to map
             val existingDto: SwaggerMethodDto? = resultList.find { dto ->
                 dto.path == path
             }
@@ -44,7 +69,5 @@ class SpringSourceCodeParser {
                 resultList.add(newDto)
             }
         }
-
-        return resultList
     }
 }
