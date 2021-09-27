@@ -24,7 +24,7 @@ class SpringModelSyntaxUtil {
     }
 
     private fun generateFieldCode(entry: Map.Entry<String, Schema<Any>>, models: Map<String, Schema<Any>>): String {
-        val parameterType = typesUtil.getParameterType(entry.value, models)
+        val parameterType = typesUtil.getType(entry.value, models)
         val name = generateFieldName(parameterType, entry.key)
         return "private $parameterType $name;"
     }

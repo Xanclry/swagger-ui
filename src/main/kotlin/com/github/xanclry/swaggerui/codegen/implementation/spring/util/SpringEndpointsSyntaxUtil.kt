@@ -5,6 +5,7 @@ import io.swagger.models.HttpMethod
 import io.swagger.v3.oas.models.Operation
 import io.swagger.v3.oas.models.media.Schema
 import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.parameters.RequestBody
 import io.swagger.v3.oas.models.responses.ApiResponse
 
 class SpringEndpointsSyntaxUtil {
@@ -26,9 +27,12 @@ class SpringEndpointsSyntaxUtil {
         return "$bindAnnotationCode\n$apiOperationCode\n$apiResponsesCode\n$methodCode"
     }
 
-    private fun generateMethodCode(operationWithMethodDto: OperationWithMethodDto, models: Map<String, Schema<Any>>): String {
+    private fun generateMethodCode(
+        operationWithMethodDto: OperationWithMethodDto,
+        models: Map<String, Schema<Any>>
+    ): String {
         val returnType = generateMethodReturnType(operationWithMethodDto.operation, models)
-        val parametersString = generateMethodParameters(operationWithMethodDto.operation)
+        val parametersString = generateMethodParameters(operationWithMethodDto.operation, models)
         val methodName = generateMethodName(operationWithMethodDto)
         val returnTypeInMethod = if (returnType == "void") "" else "null"
         return """
@@ -39,19 +43,41 @@ class SpringEndpointsSyntaxUtil {
         """.trimMargin()
     }
 
-    private fun generateMethodParameters(operation: Operation): String {
+    private fun generateMethodParameters(operation: Operation, models: Map<String, Schema<Any>>): String {
         var accumulator = ""
         if (operation.parameters != null) {
             operation.parameters.forEach { parameter ->
-                accumulator += "\n".plus(generateSingleMethodParameter(parameter)).plus(",")
-            }
-
-            val lastComma = accumulator.lastIndexOf(",")
-            if (lastComma > 0) {
-                accumulator = accumulator.replaceRange(lastComma, lastComma + 1, "")
+                accumulator += "\n".plus(generateSingleMethodParameter(parameter, models)).plus(",")
             }
         }
+
+        if (operation.requestBody != null) {
+            val generatedRequestBody: String? = generateRequestBody(operation.requestBody, models)
+            if (generatedRequestBody != null) {
+                accumulator += "\n".plus(generatedRequestBody).plus(",")
+            }
+        }
+
+        val lastComma = accumulator.lastIndexOf(",")
+        if (lastComma > 0) {
+            accumulator = accumulator.replaceRange(lastComma, lastComma + 1, "")
+        }
+
         return accumulator
+    }
+
+    private fun generateRequestBody(requestBody: RequestBody, models: Map<String, Schema<Any>>): String? {
+        val schema: Schema<Any>? = requestBody.content["application/json"]?.schema
+        return if (schema != null) {
+            "@org.springframework.web.bind.annotation.RequestBody ${
+                typesUtil.getType(
+                    schema,
+                    models
+                )
+            } ${requestBody.description}"
+        } else {
+            null
+        }
     }
 
     private fun generateParameterHttpType(parameter: Parameter): String {
@@ -68,15 +94,16 @@ class SpringEndpointsSyntaxUtil {
         }
     }
 
-    private fun generateSingleMethodParameter(parameter: Parameter): String {
+    private fun generateSingleMethodParameter(parameter: Parameter, models: Map<String, Schema<Any>>): String {
 
         return """@io.swagger.annotations.ApiParam(value = "${parameter.description}") ${
             generateParameterHttpType(
                 parameter
             )
         } ${
-            typesUtil.getParameterType(
-                parameter.schema
+            typesUtil.getType(
+                parameter.schema,
+                models
             )
         } ${getParameterName(parameter)}"""
     }
@@ -86,11 +113,9 @@ class SpringEndpointsSyntaxUtil {
     }
 
     private fun generateMethodReturnType(operation: Operation, models: Map<String, Schema<Any>>): String {
-        val ref: String? = operation.responses["200"]?.content?.get("*/*")?.schema?.`$ref`
-        return if (ref != null) {
-            val returnTypeWithQuotes = ref.replaceBeforeLast("/", "").replaceRange(0, 1, "")
-
-            typesUtil.generateTypeWithFullNames(returnTypeWithQuotes, models)
+        val schema: Schema<Any>? = operation.responses["200"]?.content?.get("*/*")?.schema
+        return if (schema != null) {
+            typesUtil.getType(schema, models)
         } else {
             "void"
         }

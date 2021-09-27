@@ -2,10 +2,61 @@ package com.github.xanclry.swaggerui.codegen.implementation.spring.util
 
 import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
 import io.swagger.v3.oas.models.media.ArraySchema
+import io.swagger.v3.oas.models.media.MapSchema
 import io.swagger.v3.oas.models.media.Schema
 
 class SpringTypesUtil {
-    fun getParameterType(schema: Schema<Any>, models: Map<String, Schema<Any>>? = null): String {
+
+    fun getType(schema: Schema<Any>, models: Map<String, Schema<Any>>): String {
+        val simpleType = getPrimitiveType(schema, models)
+        if (simpleType == null) {
+            val collectionType = getCollectionType(schema, models)
+            if (collectionType == null) {
+                val ref = schema.`$ref` ?: return "Object"
+                val referenceType = ref.substringAfterLast("/")
+                return generateTypeWithFullNames(referenceType, models)
+            }
+            return generateTypeWithFullNames(collectionType, models)
+        }
+        return generateTypeWithFullNames(simpleType, models)
+
+    }
+
+    private fun getCollectionType(schema: Schema<Any>, models: Map<String, Schema<Any>>): String? {
+        if (schema is MapSchema) {
+            return handleMapSchema(schema, models)
+        }
+        if (schema is ArraySchema) {
+            return handleArraySchema(schema, models)
+        }
+        return null
+    }
+
+    fun getType(shortName: String, models: Map<String, Schema<Any>>): String {
+        return generateTypeWithFullNames(shortName, models)
+    }
+
+    private fun handleMapSchema(schema: MapSchema, models: Map<String, Schema<Any>>): String {
+        val additionalProperty = schema.additionalProperties
+        try {
+            if (additionalProperty != null && additionalProperty is Schema<*>) {
+                val castedSchema = additionalProperty as Schema<Any>
+                val mapValueType = getType(castedSchema, models)
+                return "java.util.Map<Object, $mapValueType>"
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+        return "java.util.Map"
+    }
+
+    private fun handleArraySchema(schema: ArraySchema, models: Map<String, Schema<Any>>): String {
+        val ref = schema.items.`$ref`
+        val type = resolveReferenceType(ref, models)
+        return handleTemplateType("java.util.List", type)
+    }
+
+    private fun getPrimitiveType(schema: Schema<Any>, models: Map<String, Schema<Any>>): String? {
         val format = schema.format
         when (schema.type) {
             "integer" -> {
@@ -29,16 +80,25 @@ class SpringTypesUtil {
                 }
             }
             "array" -> {
-                val arraySchema = schema as ArraySchema
-                val ref = arraySchema.items.`$ref`
-                val type = resolveReferenceType(ref, models)
-                return handleTemplateType("java.util.List", type)
+                return handleArraySchema(schema as ArraySchema, models)
             }
         }
-        return "***"
+        return null
     }
 
-    fun generateTypeWithFullNames(
+    private fun resolveReferenceType(referenceLink: String?, models: Map<String, Schema<Any>>?): String? {
+        if (models == null || referenceLink == null) return null
+        val objectType = referenceLink.substringAfterLast("/")
+        val entryByReference: Map.Entry<String, Schema<Any>>? = models.entries.find { it.key == objectType }
+        return if (entryByReference != null) {
+            generateFullTypeName(entryByReference.value.description, entryByReference.key)
+        } else {
+            null
+        }
+
+    }
+
+    private fun generateTypeWithFullNames(
         typeWithShortNames: String,
         models: Map<String, Schema<Any>>
     ): String {
@@ -46,7 +106,8 @@ class SpringTypesUtil {
         var typeName = typeWithShortNames.replace("»", ">").replace("«", "<")
 
         // searching for model names in complete templated type
-        val modelsNameInTypeList: List<String> = Regex("(?<=^|[><])(\\w+)(?=[><$]|$)").findAll(typeName).map { it.value }.toList()
+        val modelsNameInTypeList: List<String> =
+            Regex("(?<=^|[><])(\\w+)(?=[><$]|$)").findAll(typeName).map { it.value }.toList()
 
         val modelsInTypeList: List<Map.Entry<String, Schema<Any>>> =
             modelsNameInTypeList.mapNotNull { ModelConfigurationFacade.findModelByName(models, it) }
@@ -69,18 +130,6 @@ class SpringTypesUtil {
         }
     }
 
-    private fun resolveReferenceType(referenceLink: String?, models: Map<String, Schema<Any>>?): String? {
-        if (models == null || referenceLink == null) return null
-        val objectType = referenceLink.substringAfterLast("/")
-        val entryByReference: Map.Entry<String, Schema<Any>>? = models.entries.find { it.key == objectType }
-        return if (entryByReference != null) {
-            generateFullTypeName(entryByReference.value.description, entryByReference.key)
-        } else {
-            null
-        }
-
-    }
-
     private fun handleTemplateType(rawTemplateType: String, diamondType: String?): String {
         return if (diamondType == null) {
             rawTemplateType
@@ -88,8 +137,6 @@ class SpringTypesUtil {
             rawTemplateType.plus("<").plus(diamondType).plus(">")
         }
     }
-
-
 
     companion object {
         fun generateFullTypeName(packagePath: String, className: String): String {
