@@ -7,6 +7,8 @@ import io.swagger.v3.oas.models.media.Schema
 
 class SpringTypesUtil {
 
+    private val smartGenerationConfig = SpringSmartGenerationConfiguration()
+
     fun getType(schema: Schema<Any>, models: Map<String, Schema<Any>>): String {
         val simpleType = getPrimitiveType(schema, models)
         if (simpleType == null) {
@@ -91,7 +93,8 @@ class SpringTypesUtil {
         val objectType = referenceLink.substringAfterLast("/")
         val entryByReference: Map.Entry<String, Schema<Any>>? = models.entries.find { it.key == objectType }
         return if (entryByReference != null) {
-            generateFullTypeName(entryByReference.value.description, entryByReference.key)
+            val packagePath = smartGenerationConfig.getModelPath(entryByReference.value)
+            generateFullTypeName(packagePath, entryByReference.key)
         } else {
             null
         }
@@ -115,7 +118,7 @@ class SpringTypesUtil {
         modelsInTypeList.forEach { entry: Map.Entry<String, Schema<Any>> ->
             typeName = typeName.replace(
                 Regex("(?<=^|[<>])(${entry.key})(?=[><$]|$)"),
-                generateFullTypeName(entry.value.description, entry.key)
+                generateFullTypeName(smartGenerationConfig.getModelPath(entry.value), entry.key)
             )
         }
         // now with full names

@@ -7,7 +7,6 @@ import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
-import com.github.xanclry.swaggerui.model.file.PsiFileWithDirectory
 import com.github.xanclry.swaggerui.services.facade.EndpointsConfigurationFacade
 import com.github.xanclry.swaggerui.services.facade.ModelConfigurationFacade
 import com.github.xanclry.swaggerui.util.DocumentUtil
@@ -20,8 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiFile
-import io.swagger.v3.oas.models.media.Schema
 
 class SmartGenerationFacade(language: Language, private val project: Project) {
 
@@ -42,7 +39,7 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
 
             val modelSourceRoot = filterSourceRoots(modelSourceRoots)
             val filteredModelsMap = modelConfigurationFacade.getFilteredModelsFromConfig(modelGenerator)
-            val modelPsiFilesList = computeListOfModelPsiFiles(modelSourceRoot, filteredModelsMap)
+            val modelPsiFilesList = modelGenerator.computeListOfModelPsiFiles(modelSourceRoot, filteredModelsMap)
 
             WriteCommandAction.runWriteCommandAction(project) {
                 modelPsiFilesList.forEach { model ->
@@ -79,14 +76,12 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
         } catch (e: Exception) {
             Notifier.notifyProjectWithMessageFromBundle(project, "notification.codegen.error", NotificationType.ERROR)
         } finally {
-            if (editedFilesCounter > 0) {
-                Notifier.notifyProjectWithContentAfterBundleMessage(
-                    project,
-                    editedFilesCounter.toString(),
-                    "notification.codegen.smart.success.filesAffected",
-                    NotificationType.INFORMATION
-                )
-            }
+            Notifier.notifyProjectWithContentAfterBundleMessage(
+                project,
+                editedFilesCounter.toString(),
+                "notification.codegen.smart.success.filesAffected",
+                NotificationType.INFORMATION
+            )
         }
     }
 
@@ -103,33 +98,6 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
             missingEndpoints,
             endpointsGenerator::parsePathAndFilename
         )
-    }
-
-    private fun computeListOfModelPsiFiles(
-        sourceRoot: VirtualFile,
-        models: Map<String, Schema<Any>>
-    ): List<PsiFileWithDirectory> {
-        return models.entries.mapNotNull {
-            handleModelDescription(it, sourceRoot, models)
-        }
-    }
-
-    private fun handleModelDescription(
-        entry: Map.Entry<String, Schema<Any>>,
-        sourceRoot: VirtualFile,
-        filteredModels: Map<String, Schema<Any>>
-    ): PsiFileWithDirectory? {
-        val packagePath = entry.value.description
-        val directory = documentUtil.createOrFindDirectory(project, sourceRoot, packagePath)
-        val filename = modelGenerator.getFilenameFromModelName(entry.key)
-        val modelFile = documentUtil.findFileInDirectory(directory, filename)
-        return if (modelFile == null) {
-            val modelFileContent = modelGenerator.generateModelCode(entry.key, packagePath, filteredModels)
-            val newPsiModelFile: PsiFile = modelGenerator.generateModelPsiFile(filename, modelFileContent)
-            PsiFileWithDirectory(newPsiModelFile, directory)
-        } else {
-            null
-        }
     }
 
     private fun iterateVirtualFile(virtualFile: VirtualFile, existingMapping: MutableSet<SwaggerMethodDto>) {

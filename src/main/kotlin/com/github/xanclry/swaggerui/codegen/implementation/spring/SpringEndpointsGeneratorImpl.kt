@@ -4,10 +4,7 @@ import com.github.xanclry.swaggerui.codegen.EndpointsGenerator
 import com.github.xanclry.swaggerui.codegen.GeneratedMethodsAdapter
 import com.github.xanclry.swaggerui.codegen.exception.FileIsNotControllerException
 import com.github.xanclry.swaggerui.codegen.exception.PathDontMatchException
-import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringEndpointsSyntaxUtil
-import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringGeneratedMethodsAdapter
-import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringSourceCodeParser
-import com.github.xanclry.swaggerui.codegen.implementation.spring.util.SpringTypesUtil
+import com.github.xanclry.swaggerui.codegen.implementation.spring.util.*
 import com.github.xanclry.swaggerui.model.ControllerFileMetadata
 import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
@@ -32,16 +29,24 @@ class SpringEndpointsGeneratorImpl(project: Project) : EndpointsGenerator {
     private val language = Language.findLanguageByID("JAVA")!!
     private val codeParser = SpringSourceCodeParser()
     private val documentUtil = DocumentUtil()
+    private val defaultConfig = SpringSmartGenerationConfiguration()
 
     override fun parseExistingMappings(code: String, fullPath: Boolean): List<SwaggerMethodDto> {
         return codeParser.getEndpointsMappings(code, fullPath)
     }
 
     override fun parsePathAndFilename(operationWithMethod: OperationWithMethodDto): FileMetadataDto {
-        val tagWithDot = operationWithMethod.operation.tags.first { it.contains('.') }
-        val path = tagWithDot.substringBeforeLast(".")
-        val fileName = tagWithDot.substringAfterLast('.').plus(".").plus(getExtension())
-        return FileMetadataDto(path, fileName)
+        val tagWithDot = operationWithMethod.operation.tags.firstOrNull { it.contains('.') }
+        val path: String
+        val fileName: String
+        if (tagWithDot != null) {
+            path = tagWithDot.substringBeforeLast(".")
+            fileName = tagWithDot.substringAfterLast('.')
+        } else {
+            path = defaultConfig.getControllerDefaultPath()
+            fileName = defaultConfig.getControllerDefaultName()
+        }
+            return FileMetadataDto(path, fileName.plus(".").plus(getExtension()))
     }
 
     override fun isController(document: Document): ControllerFileMetadata {
