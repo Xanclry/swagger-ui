@@ -39,14 +39,19 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
 
             val modelSourceRoot = filterSourceRoots(modelSourceRoots)
             val filteredModelsMap = modelConfigurationFacade.getFilteredModelsFromConfig(modelGenerator)
-            val modelPsiFilesList = modelGenerator.computeListOfModelPsiFiles(modelSourceRoot, filteredModelsMap)
 
             WriteCommandAction.runWriteCommandAction(project) {
-                modelPsiFilesList.forEach { model ->
-                    endpointsGenerator.reformatAndOptimizeImports(model.psiFile, project)
-                    documentUtil.createFileInDirectory(project, model.psiFile, model.directory)
-                    editedFilesCounter++
+
+                filteredModelsMap.entries.forEach {
+                    val model = modelGenerator.parseModelMapEntry(it, modelSourceRoot, filteredModelsMap)
+                    if (model != null) {
+
+                        endpointsGenerator.reformatAndOptimizeImports(model.psiFile, project)
+                        documentUtil.createFileInDirectory(project, model.psiFile, model.directory)
+                        editedFilesCounter++
+                    }
                 }
+
                 fileWithOperationsMap.forEach { (fileMetadata, operationList) ->
                     val controllerPath =
                         endpointsConfigurationFacade.findEndpointsCommonPrefix(operationList.map { it.path })
@@ -114,14 +119,20 @@ class SmartGenerationFacade(language: Language, private val project: Project) {
 
     private fun addExistingEndpointsToList(
         virtualFile: VirtualFile,
-        existingMapping: MutableSet<SwaggerMethodDto>
+        allExistingMappings: MutableSet<SwaggerMethodDto>
     ) {
-        existingMapping.addAll(
-            endpointsGenerator.parseExistingMappings(
-                fileDocumentManager.getDocument(virtualFile)!!.text,
-                true
-            )
+        val existingMappingsFromFile: List<SwaggerMethodDto> = endpointsGenerator.parseExistingMappings(
+            fileDocumentManager.getDocument(virtualFile)!!.text,
+            true
         )
+        existingMappingsFromFile.forEach { newMapping: SwaggerMethodDto ->
+            val samePath = allExistingMappings.find { it.path == newMapping.path }
+            if (samePath != null) {
+                samePath.methodSet.addAll(newMapping.methodSet)
+            } else {
+                allExistingMappings.add(newMapping)
+            }
+        }
     }
 
 }

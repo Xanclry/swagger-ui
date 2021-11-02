@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -42,7 +43,7 @@ class DocumentUtil {
         return document
     }
 
-    fun createOrFindDirectory(project: Project, root: VirtualFile, targetPackagePath: String): VirtualFile {
+    fun createOrFindDirectory(project: Project, root: VirtualFile, targetPackagePath: String): VirtualDirectoryImpl {
         var currentPackage = root
         val directoryNames: List<String> = targetPackagePath.split(".")
         WriteCommandAction.runWriteCommandAction(project) {
@@ -51,7 +52,7 @@ class DocumentUtil {
                     currentPackage.findChild(directoryName) ?: currentPackage.createChildDirectory(null, directoryName)
             }
         }
-        return currentPackage
+        return currentPackage as VirtualDirectoryImpl
     }
 
     fun loadText(virtualFile: VirtualFile): String {

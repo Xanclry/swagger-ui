@@ -11,8 +11,10 @@ interface ModelGenerator {
     fun getFilenameFromModelName(modelName: String): String
     fun generateModelPsiFile(filename: String, code: String = ""): PsiFile
     fun generateModelCode(modelName: String, packagePath: String, models: Map<String, Schema<Any>>): String
-    fun computeListOfModelPsiFiles(
+
+    fun parseModelMapEntry(
+        entry: Map.Entry<String, Schema<Any>>,
         sourceRoot: VirtualFile,
-        models: Map<String, Schema<Any>>
-    ): List<PsiFileWithDirectory>
+        filteredModels: Map<String, Schema<Any>>
+    ): PsiFileWithDirectory?
 }

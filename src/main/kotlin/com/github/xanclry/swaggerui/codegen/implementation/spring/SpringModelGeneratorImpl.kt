@@ -41,16 +41,7 @@ class SpringModelGeneratorImpl(val project: Project) : ModelGenerator {
         return modelSyntaxUtil.generateModelCode(modelName, packagePath, models)
     }
 
-    override fun computeListOfModelPsiFiles(
-        sourceRoot: VirtualFile,
-        models: Map<String, Schema<Any>>
-    ): List<PsiFileWithDirectory> {
-        return models.entries.mapNotNull {
-            parseModelMapEntry(it, sourceRoot, models)
-        }
-    }
-
-    private fun parseModelMapEntry(
+    override fun parseModelMapEntry(
         entry: Map.Entry<String, Schema<Any>>,
         sourceRoot: VirtualFile,
         filteredModels: Map<String, Schema<Any>>

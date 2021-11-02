@@ -45,7 +45,8 @@ class EndpointsConfigurationFacade(project: Project) {
     }
 
     fun findEndpointsCommonPrefix(endpointsPaths: List<String>): String {
-        val commonPrefix = StringUtils.getCommonPrefix(endpointsPaths.toTypedArray())
+        var commonPrefix = StringUtils.getCommonPrefix(endpointsPaths.toTypedArray())
+        commonPrefix = commonPrefix.substringBefore('{').removeSuffix("/")
         return if (commonPrefix == "") {
             "/"
         } else {
