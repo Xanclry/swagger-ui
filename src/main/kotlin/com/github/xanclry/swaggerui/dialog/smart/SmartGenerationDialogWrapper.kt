@@ -17,16 +17,26 @@ class SmartGenerationDialogWrapper(private val moduleList: List<ModuleDto>) : Di
     }
 
     override fun createCenterPanel(): JComponent {
+        selectedWebModule = defaultWebModule(moduleList)
+        selectedModelModule = defaultModelModule(moduleList)
         return panel {
-            row("Select module for generation: ") {
+            row("Web module ") {
                 comboBox(DefaultComboBoxModel(moduleList.toTypedArray()), { selectedWebModule }, { selectedWebModule = it })
             }
-            row("Select module with models: ") {
+            row("Model, DTO module ") {
                 comboBox(DefaultComboBoxModel(moduleList.toTypedArray()), { selectedModelModule }, { selectedModelModule = it })
             }
             row("Language: ") {
                 comboBox(DefaultComboBoxModel(Language.values()), { selectedLanguage }, { selectedLanguage = it ?: Language.SPRING })
             }
         }
+    }
+
+    private fun defaultWebModule(moduleList: List<ModuleDto>): ModuleDto? {
+        return moduleList.find { it.name.contains("web", true) }
+    }
+
+    private fun defaultModelModule(moduleList: List<ModuleDto>): ModuleDto? {
+        return moduleList.find { it.name.contains("model", true) }
     }
 }
