@@ -4,6 +4,7 @@ import com.github.xanclry.swaggerui.model.OperationWithMethodDto
 import com.github.xanclry.swaggerui.model.SwaggerMethodDto
 import com.github.xanclry.swaggerui.model.file.FileMetadataDto
 import com.github.xanclry.swaggerui.services.ConfigurationService
+import com.github.xanclry.swaggerui.util.EndpointUtil.Companion.compareEndpoints
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import io.swagger.models.HttpMethod
@@ -84,7 +85,7 @@ class EndpointsConfigurationFacade(project: Project) {
     ) {
         val path = entryFromConfig.key
         var existingMappingForCurrentPath: SwaggerMethodDto? =
-            existingMappings.find { mapping -> mapping.path == path }
+            existingMappings.find { mapping -> compareEndpoints(mapping.path, path) }
         if (existingMappingForCurrentPath == null) {
             existingMappingForCurrentPath = SwaggerMethodDto(HashSet(), path)
         }

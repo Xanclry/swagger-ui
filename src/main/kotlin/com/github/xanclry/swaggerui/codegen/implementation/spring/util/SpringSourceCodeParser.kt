@@ -32,7 +32,7 @@ class SpringSourceCodeParser {
 
         handleSearchResult(pathSpecifiedSearchResult, resultList, controllerPath, false)
 
-        val pathNotSpecifiedRegex = "@([^R]{3,7})Mapping(\n|\\Q()\\E\n)".toRegex()
+        val pathNotSpecifiedRegex = "@([^R]{3,7})Mapping(\n|\\Q()\\E\n|\\Q(\"\")\\E)".toRegex()
         val pathNotSpecifiedSearchResult = pathNotSpecifiedRegex.findAll(text)
 
         handleSearchResult(pathNotSpecifiedSearchResult, resultList, controllerPath, true)
@@ -64,10 +64,24 @@ class SpringSourceCodeParser {
             if (existingDto != null) {
                 existingDto.methodSet.add(method)
             } else {
-                val newDto = SwaggerMethodDto(HashSet(), controllerPath.plus(path))
+                val newDto = SwaggerMethodDto(HashSet(), uniteControllerAndMethodPath(controllerPath, path))
                 newDto.methodSet.add(method)
                 resultList.add(newDto)
             }
         }
+    }
+
+    private fun uniteControllerAndMethodPath(controllerPath: String, methodPath: String): String {
+        val controllerPathWithSlash = if (!controllerPath.endsWith("/")) {
+            controllerPath.plus("/")
+        } else {
+            controllerPath
+        }
+        val methodPathWithSlash = if (!methodPath.startsWith("/")) {
+            "/".plus(methodPath)
+        } else {
+            methodPath
+        }
+        return controllerPathWithSlash.plus(methodPathWithSlash).replace("//", "/")
     }
 }
