@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils
 
 class EndpointsConfigurationFacade(project: Project) {
     private val configurationService = project.service<ConfigurationService>()
+    private val blacklistExtensionName = "x-swagger-ui-blacklist"
 
     fun identifyMissingEndpoints(
         controllerPath: String,
@@ -29,7 +30,8 @@ class EndpointsConfigurationFacade(project: Project) {
             openApiConfig.paths.entries.filter { entry ->
                 entry.key.startsWith(controllerPath)
             }
-        return differenceBetweenAllAndExisting(endpointsForCurrentControllerFromConfig, fullPathMappings)
+        val blacklistPaths: Collection<String>? = getBlacklistedPaths(openApiConfig)
+        return differenceBetweenAllAndExisting(endpointsForCurrentControllerFromConfig, fullPathMappings, blacklistPaths)
     }
 
     fun computeFileOperationsMap(
@@ -47,7 +49,10 @@ class EndpointsConfigurationFacade(project: Project) {
 
     fun findEndpointsCommonPrefix(endpointsPaths: List<String>): String {
         var commonPrefix = StringUtils.getCommonPrefix(endpointsPaths.toTypedArray())
-        commonPrefix = commonPrefix.substringBefore('{').removeSuffix("/")
+        commonPrefix = commonPrefix
+            .substringBefore('{')
+            .substringBeforeLast("/")
+            .removeSuffix("/")
         return if (commonPrefix == "") {
             "/"
         } else {
@@ -57,11 +62,14 @@ class EndpointsConfigurationFacade(project: Project) {
 
     private fun differenceBetweenAllAndExisting(
         all: Collection<MutableMap.MutableEntry<String, PathItem>>,
-        existing: Collection<SwaggerMethodDto>
+        existing: Collection<SwaggerMethodDto>,
+        blacklist: Collection<String>?
     ): List<OperationWithMethodDto> {
         val accumulator: MutableList<OperationWithMethodDto> = ArrayList()
         all.forEach { entryFromConfig ->
-            handleOpenApiPath(entryFromConfig, existing, accumulator)
+            if (blacklist == null || blacklist.none { compareEndpoints(entryFromConfig.key, it) }) {
+                handleOpenApiPath(entryFromConfig, existing, accumulator)
+            }
         }
         return accumulator
     }
@@ -70,12 +78,18 @@ class EndpointsConfigurationFacade(project: Project) {
         val openApiConfig: OpenAPI = getConfiguration()
         val allEndpointsFromConfig: List<MutableMap.MutableEntry<String, PathItem>> =
             openApiConfig.paths.entries.toList()
+        val blacklistPaths: Collection<String>? = getBlacklistedPaths(openApiConfig)
 
-        return differenceBetweenAllAndExisting(allEndpointsFromConfig, existingMappings)
+        return differenceBetweenAllAndExisting(allEndpointsFromConfig, existingMappings, blacklistPaths)
     }
 
     private fun getConfiguration(): OpenAPI {
         return configurationService.getConfiguration()
+    }
+
+    private fun getBlacklistedPaths(config: OpenAPI): Collection<String>? {
+        val blacklist: List<String>? = config.info.extensions[blacklistExtensionName] as List<String>?
+        return if (blacklist != null) HashSet(blacklist) else null
     }
 
     private fun handleOpenApiPath(
