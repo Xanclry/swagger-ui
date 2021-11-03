@@ -79,6 +79,45 @@ And for model, this is the <kbd>description</kbd>:
 },
 ```
 
+### Endpoints Blacklist
+
+In case you don't want the plugin to handle certain paths, you can use the blacklist. 
+
+This blacklist should be located in extensions for the OpenApi configuration.
+Name of the extension must be `x-swagger-ui-blacklist` and contain an array of strings.
+
+For endpoints that _**exactly match**_ those contained in the blacklist
+won't be generated an endpoint (for any HTTP method).
+
+Config example
+```
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Example Description",
+    "title": "example.com API",
+    "x-swagger-ui-blacklist": [
+      "/api/first/url",
+      "/api/second/url"
+    ]
+  },
+  "host": "example.com",
+  . 
+  .
+  and so on
+```
+
+
+## Compilation
+
+- First specify new version in both `gradle.properties` and `resources/META-INF/plugin.xml`.
+- Then for compilation use this Gradle task:
+
+`gradle clean buildDependents -x test -x detekt -x ktlintMainSourceSetCheck`
+
+- You can find the zipped plugin at
+  `build/distributions/`
+
 ## Installation
 
 - Using IDE built-in plugin system:

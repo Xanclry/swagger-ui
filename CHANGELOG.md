@@ -6,6 +6,36 @@ All notable changes to this project will be documented in this file.
 
 [comment]: <> (## [Unreleased])
 
+## [1.2.1]
+
+### Added
+
+- Blacklist url feature
+
+### Changed
+
+- Selection by default in smart generation modal window
+
+### Fixed
+
+- Imports in generated classes
+- Normalizing URL when searching endpoints
+
+## [1.2.0]
+
+### Added
+
+- Smart generation feature
+
+### Changed
+
+- Improved type recognition
+
+### Fixed
+
+- Parsing annotations without brackets
+- Removed deprecated notification group
+
 ## [1.1.0]
 
 ### Added
