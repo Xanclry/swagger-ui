@@ -88,7 +88,8 @@ class EndpointsConfigurationFacade(project: Project) {
     }
 
     private fun getBlacklistedPaths(config: OpenAPI): Collection<String>? {
-        val blacklist: List<String>? = config.info.extensions[blacklistExtensionName] as List<String>?
+        val extensions: Map<String, Any>? = config.info?.extensions
+        val blacklist: List<String>? = extensions?.getOrDefault(blacklistExtensionName, null) as List<String>?
         return if (blacklist != null) HashSet(blacklist) else null
     }
 

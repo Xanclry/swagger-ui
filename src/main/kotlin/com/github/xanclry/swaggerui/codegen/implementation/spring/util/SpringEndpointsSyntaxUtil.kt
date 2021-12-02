@@ -124,8 +124,11 @@ class SpringEndpointsSyntaxUtil {
     private fun generateMethodName(operationWithMethodDto: OperationWithMethodDto): String {
         val operationId = operationWithMethodDto.operation.operationId
         val usingIndex = operationId.lastIndexOf("Using${operationWithMethodDto.method.toString().toUpperCase()}")
-
-        return operationId.replaceRange(usingIndex, operationId.length, "")
+        return if (usingIndex != -1) {
+            operationId.replaceRange(usingIndex, operationId.length, "")
+        } else {
+            operationId
+        }
     }
 
     private fun generateApiResponsesCode(operation: Operation): String {

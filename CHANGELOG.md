@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 [comment]: <> (## [Unreleased])
 
+## [1.2.2]
+
+### Fixed
+
+- Some stability fixes
+- Removed upper boundary for IDEA version
+
 ## [1.2.1]
 
 ### Added
